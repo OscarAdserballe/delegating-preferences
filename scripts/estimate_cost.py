@@ -17,32 +17,35 @@ ROOT = Path(__file__).resolve().parents[1]
 N_HELDOUT = 100
 
 
-def provider_throughput(pilot_dir: Path) -> dict[str, float]:
-    """Logged calls per second per provider over each provider's busiest stretch (from log timestamps)."""
+def sustained_throughput(pilot_dirs: list[Path]) -> dict[tuple[str, str], float]:
+    """Calls per second per (arm, provider): the median over minutes in which that arm logged any call."""
     rows = [
-        (e["usage"].get("provider"), e["time"])
-        for p in (pilot_dir / "calls").glob("*/*.jsonl.gz")
+        (e["arm"], str(e["usage"].get("provider")).lower(), e["time"])
+        for d in pilot_dirs
+        for p in (d / "calls").glob("*/*.jsonl.gz")
         for e in _read_lines(p)
     ]
-    df = pd.DataFrame(rows, columns=["provider", "time"]).dropna()
-    out = {}
-    for prov, g in df.groupby("provider"):
-        per_min = g["time"].floordiv(60).value_counts()
-        out[str(prov).lower()] = float(per_min.max() / 60)
-    return out
+    df = pd.DataFrame(rows, columns=["arm", "provider", "time"])
+    df["minute"] = df["time"] // 60
+    per_min = df.groupby(["arm", "provider", "minute"]).size()
+    return {(str(a), str(p)): float(v) / 60 for (a, p), v in per_min.groupby(level=[0, 1]).median().items()}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pilot", type=Path, default=ROOT / "results" / "pilot")
+    ap.add_argument("--add", type=Path, nargs="*", default=[], help="more pilot dirs (e.g. a provider probe)")
     ap.add_argument("--config", type=Path, default=ROOT / "configs" / "main.toml")
     ap.add_argument("--budget", type=float, default=20.0)
     args = ap.parse_args()
 
     cfg = RunConfig.from_toml(args.config)
     df = pd.read_parquet(args.pilot / "decisions.parquet")
+    for extra in args.add:
+        other = pd.read_parquet(extra / "decisions.parquet")
+        df = pd.concat([df[~df["arm"].isin(set(other["arm"]))], other], ignore_index=True)
     n_users = cfg.n_users
-    throughput = provider_throughput(args.pilot)
+    throughput = sustained_throughput([args.pilot, *args.add])
     rows = []
     for spec in cfg.arms:
         d = df[df["arm"] == spec.arm]
@@ -60,7 +63,8 @@ def main() -> int:
             total += per.loc[("heldout", cp)] * reps
             if cp < N_ROUNDS:
                 total += per.loc[("dialogue", cp)] * n_users
-        hours = total["calls"] / throughput.get(spec.provider.lower(), float("nan")) / 3600
+        rate = throughput.get((spec.arm, spec.provider.lower()), float("nan"))
+        hours = total["calls"] / rate / 3600
         rows.append(
             {
                 "arm": spec.arm,
@@ -70,7 +74,7 @@ def main() -> int:
                 "output_tokens_M": total["completion_tokens"] / 1e6,
                 "thinking_tokens_M": total["reasoning_tokens"] / 1e6,
                 "cost_usd": total["cost"],
-                "pilot_calls_per_s": throughput.get(spec.provider.lower()),
+                "pilot_calls_per_s": rate,
                 "hours_if_alone": hours,
             }
         )
@@ -97,7 +101,7 @@ def main() -> int:
                 "config": args.config.name,
                 "arms": est.reset_index().to_dict("records"),
                 "total_usd": cost,
-                "throughput_calls_per_s": throughput,
+                "throughput_calls_per_s": {f"{a}@{p}": v for (a, p), v in throughput.items()},
             },
             indent=1,
             default=float,

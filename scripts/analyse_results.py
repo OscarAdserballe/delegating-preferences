@@ -19,10 +19,10 @@ LLM_ORDER = ("qwen25-7b", "gemma4-31b", "gemma4-31b-think")
 PAPER_QWEN_FINAL = 0.37
 
 
-def call_stats(run_dir: Path, budgets: dict[str, int | None]) -> pd.DataFrame:
+def call_stats(run_dirs: list[Path], budgets: dict[str, int | None]) -> pd.DataFrame:
     """Per arm, per network call (log entry): tokens, latency, finish reasons, how often the thinking cap binds."""
     rows = []
-    for path in (run_dir / "calls").glob("*/*.jsonl.gz"):
+    for path in (p for d in run_dirs for p in (d / "calls").glob("*/*.jsonl.gz")):
         for e in _read_lines(path):
             u = e["usage"]
             rows.append(
@@ -49,12 +49,13 @@ def call_stats(run_dir: Path, budgets: dict[str, int | None]) -> pd.DataFrame:
     if calls.empty:
         return calls
     out = []
-    for arm, g in calls.groupby("arm"):
+    for (arm, provider), g in calls.groupby(["arm", "provider"]):
         budget = budgets.get(str(arm))
         r = g["reasoning_tokens"].astype(float)
         out.append(
             {
                 "arm": arm,
+                "provider": provider,
                 "calls": len(g),
                 "reminder_calls": int(g["reminder"].sum()),
                 "prompt_tokens_mean": g["prompt_tokens"].mean(),
@@ -94,12 +95,23 @@ def est(e: metrics.Estimate, scale: float = 100) -> dict[str, float]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("run_dir", type=Path)
+    ap.add_argument("run_dir", type=Path, help="results/<run_id>; outputs go here")
+    ap.add_argument("--add", type=Path, nargs="*", default=[], help="more run dirs whose arms are added (same users)")
     ap.add_argument("--n-boot", type=int, default=metrics.N_BOOT)
     args = ap.parse_args()
     run_dir: Path = args.run_dir
     manifest = json.loads((run_dir / "manifest.json").read_text())
     df = pd.read_parquet(run_dir / "decisions.parquet")
+    for extra in args.add:
+        other = pd.read_parquet(extra / "decisions.parquet")
+        if set(other["user_id"]) != set(df["user_id"]):
+            raise SystemExit(f"{extra} has different users")
+        df = pd.concat([df[~df["arm"].isin(set(other["arm"]))], other], ignore_index=True)
+        m = json.loads((extra / "manifest.json").read_text())
+        manifest["models"].update(m["models"])
+        manifest.setdefault("added_runs", []).append(
+            {"run_id": m["run_id"], "served": m.get("served"), "cost_total_usd": m.get("cost_total_usd")}
+        )
     arms = set(df["arm"])
     llm_arms = [a for a in LLM_ORDER if a in arms] + sorted(a for a in manifest["models"] if a not in LLM_ORDER)
     out = run_dir / "analysis"
@@ -204,8 +216,13 @@ def main() -> int:
         print(f"\n% of decisions needing the format reminder, by checkpoint\n{retry_cp}")
         unparsed = llm[llm["unparsed"]]
         if len(unparsed):
-            print("\nUnparsed replies (after the retry):")
-            print(unparsed[["arm", "user_id", "checkpoint", "kind", "menu_index", "raw_text"]].to_string(index=False))
+            print("\nUnparsed after the retry (scored wrong), by arm × user × checkpoint:")
+            print(
+                unparsed.pivot_table(
+                    index=["arm", "user_id"], columns="checkpoint", values="pick", aggfunc="size", fill_value=0
+                )
+            )
+            print("raw replies:", unparsed["raw_text"].fillna("<none>").str[:60].value_counts().head(5).to_dict())
         summary["diagnostics"]["per_arm"] = per.reset_index().to_dict("records")
         summary["diagnostics"]["retry_by_checkpoint"] = {
             str(a): {str(c): float(v) for c, v in row.items()} for a, row in retry_cp.iterrows()
@@ -218,16 +235,26 @@ def main() -> int:
         ].to_dict("records")
 
     budgets = {a: m["request_params"].get("reasoning", {}).get("max_tokens") for a, m in manifest["models"].items()}
-    calls = call_stats(run_dir, budgets)
+    calls = call_stats([run_dir, *args.add], budgets)
     if not calls.empty:
         calls.to_csv(out / "call_stats.csv", index=False)
-        print(f"\nPer network call (all logged calls)\n{calls.drop(columns=['providers']).round(3).T}")
+        table = calls.drop(columns=["providers"]).round(3).T
+        print(f"\nPer network call (all logged calls), by arm and served provider\n{table}")
         summary["diagnostics"]["calls"] = calls.replace({np.nan: None}).to_dict("records")
 
     fig = figures.results_figure(acc, reg, out / "results.png", f"{manifest['run_id']}: {n_users} users")
     summary["manifest"] = {
         k: manifest.get(k)
-        for k in ("served", "cost_total_usd", "git", "started", "finished", "concurrency", "duplicate_calls")
+        for k in (
+            "served",
+            "cost_total_usd",
+            "git",
+            "started",
+            "finished",
+            "concurrency",
+            "duplicate_calls",
+            "added_runs",
+        )
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=1, default=float) + "\n")
     print(f"\nwrote {out}/*.csv, {fig}, {run_dir / 'summary.json'}")

@@ -1,0 +1,46 @@
+{
+ "config": "main.toml",
+ "arms": [
+  {
+   "arm": "qwen25-7b",
+   "provider": "phala",
+   "calls": 28100.0,
+   "input_tokens_M": 18.11028,
+   "output_tokens_M": 0.366225,
+   "thinking_tokens_M": 0.0,
+   "cost_usd": 1.8842729999999999,
+   "pilot_calls_per_s": 11.8,
+   "hours_if_alone": 0.661487758945386
+  },
+  {
+   "arm": "gemma4-31b",
+   "provider": "crusoe",
+   "calls": 25350.0,
+   "input_tokens_M": 16.74149,
+   "output_tokens_M": 0.22815,
+   "thinking_tokens_M": 0.0,
+   "cost_usd": 2.4350686,
+   "pilot_calls_per_s": 0.11666666666666667,
+   "hours_if_alone": 60.35714285714286
+  },
+  {
+   "arm": "gemma4-31b-think",
+   "provider": "crusoe",
+   "calls": 32250.0,
+   "input_tokens_M": 22.65554,
+   "output_tokens_M": 79.908896,
+   "thinking_tokens_M": 49.250888,
+   "cost_usd": 35.135334,
+   "pilot_calls_per_s": 0.16666666666666666,
+   "hours_if_alone": 53.75
+  }
+ ],
+ "total_usd": 39.4546756,
+ "throughput_calls_per_s": {
+  "gemma4-31b@crusoe": 0.11666666666666667,
+  "gemma4-31b@friendli": 9.25,
+  "gemma4-31b-think@crusoe": 0.16666666666666666,
+  "gemma4-31b-think@friendli": 5.016666666666667,
+  "qwen25-7b@phala": 11.8
+ }
+}

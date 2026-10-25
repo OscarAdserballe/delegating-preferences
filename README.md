@@ -19,6 +19,11 @@ uv run python scripts/download_paper_data.py   # Zenodo 17677329 → data/paper/
 | S0 | `uv run python scripts/check_bayesian_assistant.py` | Bayes 33 → 57 → 67 → 73 → 77 → 80% on all 624 users |
 | S1 | `uv run python scripts/check_simulated_agents.py` | random ≈ 33%, oracle 100% with regret 0, 605 decisions per user |
 | S2 | `uv run python scripts/run_experiment.py --config configs/s2_one_llm.toml` then `scripts/check_one_llm.py` | 605 parsed replies, 0 duplicate calls after kill + resume, transcript as Table H3 |
+| S3 | `run_experiment.py --config configs/pilot.toml`, `analyse_results.py results/pilot --add results/probe-friendli`, `estimate_cost.py --pilot results/pilot --add results/probe-friendli`, `check_pilot.py` | 0 unparsed, providers stable, thinking cap binds < 5%, main run projected < $20, every table and figure |
+
+S3 status: **gate fails** on Gemma 4 thinking (runaway thinking; no provider enforces the 1,024 budget),
+cost ($39 projected) and Crusoe throughput (shared-pool rate limits). See `results/pilot/analysis/`.
+`results/probe-friendli` holds both Gemma arms on Friendli for the same 2 users (Crusoe could not finish them).
 
 ## Data notes
 
