@@ -3,7 +3,7 @@
  "config": {
   "run_id": "main",
   "n_users": 50,
-  "max_in_flight": 256,
+  "max_in_flight": 64,
   "max_cost": 50.0,
   "push_every_s": 180,
   "arms": [
@@ -43,9 +43,9 @@
   ]
  },
  "git": {
-  "sha": "124cf49a6d002743e773802c6827cb1229e2f39d",
+  "sha": "ac999c357e0deb486f86527757a7d86196241f81",
   "branch": "claude/peaceful-planck-1swzju",
-  "dirty": true
+  "dirty": false
  },
  "users": [
   378,
@@ -165,7 +165,45 @@
   }
  },
  "python": "3.11.17",
- "started": "2026-10-25T14:01:23+0000",
- "log_entries_at_start": 7310,
- "status": "running"
+ "started": "2026-10-25T13:53:38+0000",
+ "log_entries_at_start": 4275,
+ "status": "aborted: CancelledError: ",
+ "finished": "2026-10-25T14:15:44+0000",
+ "served": {
+  "gemma4-31b": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  },
+  "qwen25-7b": {
+   "provider": "Phala",
+   "model": "qwen/qwen-2.5-7b-instruct"
+  },
+  "gemma4-31b-think": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  }
+ },
+ "cost_this_session_usd": 0.831841,
+ "network_calls_this_session": 73146,
+ "log_hits_this_session": 24706,
+ "concurrency": {
+  "phala": {
+   "final_limit": 122,
+   "peak_in_flight": 122,
+   "halvings_on_429": 0,
+   "rate_limited_responses": 0
+  },
+  "friendli": {
+   "final_limit": 48.5,
+   "peak_in_flight": 86,
+   "halvings_on_429": 2,
+   "rate_limited_responses": 16
+  }
+ },
+ "errors": {
+  "friendli 429": 16
+ },
+ "log_entries": 20428,
+ "unique_keys": 18907,
+ "duplicate_calls": 1521
 }

@@ -27,3 +27,5 @@ push: exit 0
 [  1159s] dialogues 256/400 · network 72951 · log hits 24706 · $0.7954 · limit/in-flight phala:117/117 429s=0 friendli:44/44 429s=16
 [  1221s] dialogues 256/400 · network 73029 · log hits 24706 · $0.8116 · limit/in-flight phala:119/119 429s=0 friendli:46/45 429s=16
 [  1283s] dialogues 256/400 · network 73109 · log hits 24706 · $0.8245 · limit/in-flight phala:121/121 429s=0 friendli:48/48 429s=16
+push: exit 0 
+[  1326s] dialogues 256/400 · network 73146 · log hits 24706 · $0.8318 · limit/in-flight phala:122/0 429s=0 friendli:48/0 429s=16
