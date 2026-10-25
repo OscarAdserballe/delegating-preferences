@@ -3,7 +3,7 @@
  "config": {
   "run_id": "main",
   "n_users": 50,
-  "max_in_flight": 256,
+  "max_in_flight": 128,
   "max_cost": 50.0,
   "push_every_s": 180,
   "arms": [
@@ -43,7 +43,7 @@
   ]
  },
  "git": {
-  "sha": "124cf49a6d002743e773802c6827cb1229e2f39d",
+  "sha": "a0c8fdda2f193ed9f1626ccb05496d313ec7bfac",
   "branch": "claude/peaceful-planck-1swzju",
   "dirty": true
  },
@@ -165,48 +165,7 @@
   }
  },
  "python": "3.11.17",
- "started": "2026-10-25T14:01:23+0000",
- "log_entries_at_start": 7310,
- "status": "aborted: CancelledError: ",
- "finished": "2026-10-25T14:16:09+0000",
- "served": {
-  "gemma4-31b": {
-   "provider": "Friendli",
-   "model": "google/gemma-4-31b-it"
-  },
-  "qwen25-7b": {
-   "provider": "Phala",
-   "model": "qwen/qwen-2.5-7b-instruct"
-  },
-  "gemma4-31b-think": {
-   "provider": "Friendli",
-   "model": "google/gemma-4-31b-it"
-  }
- },
- "cost_this_session_usd": 1.018865,
- "network_calls_this_session": 69457,
- "log_hits_this_session": 27741,
- "concurrency": {
-  "friendli": {
-   "final_limit": 59.875,
-   "peak_in_flight": 259,
-   "halvings_on_429": 3,
-   "rate_limited_responses": 14
-  },
-  "phala": {
-   "final_limit": 161.5,
-   "peak_in_flight": 259,
-   "halvings_on_429": 1,
-   "rate_limited_responses": 2
-  }
- },
- "errors": {
-  "qwen25-7b ConnectError: ": 2,
-  "gemma4-31b-think ConnectError: ": 2,
-  "phala 429": 2,
-  "friendli 429": 14
- },
- "log_entries": 20511,
- "unique_keys": 18988,
- "duplicate_calls": 1523
+ "started": "2026-10-25T14:17:09+0000",
+ "log_entries_at_start": 20511,
+ "status": "running"
 }

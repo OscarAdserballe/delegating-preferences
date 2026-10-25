@@ -1,0 +1,70 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+run main: 400 dialogues, 3 LLM arms, 7310 logged calls to reuse
+[    63s] dialogues 256/400 · network 60122 · log hits 27741 · $0.0722 · limit/in-flight friendli:257/257 429s=0 phala:257/246 429s=0
+[   124s] dialogues 258/400 · network 65087 · log hits 27741 · $0.2681 · limit/in-flight friendli:129/232 429s=8 phala:130/130 429s=2
+push: exit 0 
+[   184s] dialogues 259/400 · network 67719 · log hits 27741 · $0.3879 · limit/in-flight friendli:33/47 429s=14 phala:133/133 429s=2
+[   244s] dialogues 259/400 · network 68340 · log hits 27741 · $0.4510 · limit/in-flight friendli:36/36 429s=14 phala:136/136 429s=2
+[   305s] dialogues 260/400 · network 68883 · log hits 27741 · $0.5161 · limit/in-flight friendli:38/38 429s=14 phala:139/137 429s=2
+[   366s] dialogues 260/400 · network 68948 · log hits 27741 · $0.5760 · limit/in-flight friendli:40/40 429s=14 phala:141/140 429s=2
+push: exit 0 
+[   429s] dialogues 261/400 · network 69089 · log hits 27741 · $0.6522 · limit/in-flight friendli:43/43 429s=14 phala:145/144 429s=2
+[   490s] dialogues 261/400 · network 69166 · log hits 27741 · $0.7109 · limit/in-flight friendli:45/44 429s=14 phala:146/146 429s=2
+[   552s] dialogues 262/400 · network 69208 · log hits 27741 · $0.7625 · limit/in-flight friendli:47/47 429s=14 phala:149/149 429s=2
+push: exit 0 
+[   613s] dialogues 262/400 · network 69228 · log hits 27741 · $0.7888 · limit/in-flight friendli:49/48 429s=14 phala:150/149 429s=2
+[   674s] dialogues 264/400 · network 69242 · log hits 27741 · $0.8290 · limit/in-flight friendli:51/50 429s=14 phala:153/153 429s=2
+[   734s] dialogues 264/400 · network 69309 · log hits 27741 · $0.8677 · limit/in-flight friendli:53/53 429s=14 phala:155/155 429s=2
+push: exit 0 
+[   795s] dialogues 264/400 · network 69380 · log hits 27741 · $0.9109 · limit/in-flight friendli:55/55 429s=14 phala:158/157 429s=2
+[   857s] dialogues 267/400 · network 69433 · log hits 27741 · $0.9951 · limit/in-flight friendli:58/57 429s=14 phala:161/161 429s=2
+[   886s] dialogues 267/400 · network 69457 · log hits 27741 · $1.0189 · limit/in-flight friendli:59/0 429s=14 phala:161/0 429s=2
+push: exit 0 
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/experiment.py", line 253, in run
+    raise error
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/experiment.py", line 209, in run
+    for recs in await asyncio.gather(*tasks):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/experiment.py", line 201, in one
+    recs = await job()
+           ^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/interaction_loop.py", line 89, in run_user
+    d = await agent.choose(state, menu)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/agents/llm.py", line 52, in choose
+    reply = await self.client.complete(self.spec, messages)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/call_log.py", line 101, in complete
+    c = await self.inner.complete(spec, messages)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/model_client.py", line 180, in complete
+    async with limit:
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/model_client.py", line 96, in __aenter__
+    await self._cond.wait_for(lambda: self.in_flight < int(self.limit))
+  File "/usr/lib/python3.11/asyncio/locks.py", line 294, in wait_for
+    await self.wait()
+  File "/usr/lib/python3.11/asyncio/locks.py", line 267, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/scripts/run_experiment.py", line 55, in <module>
+    main()
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/scripts/run_experiment.py", line 36, in main
+    run_dir = asyncio.run(run(cfg, progress_every=args.progress_every))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 123, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
