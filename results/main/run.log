@@ -2,3 +2,4 @@ run main: 400 dialogues, 3 LLM arms, 56988 logged calls to reuse
 [    60s] dialogues 326/400 · network 32303 · log hits 75937 · $0.2964 · limit/in-flight friendli:107/107 429s=0
 [   120s] dialogues 329/400 · network 32305 · log hits 75937 · $0.6363 · limit/in-flight friendli:119/119 429s=0
 [   180s] dialogues 333/400 · network 32306 · log hits 75937 · $0.9452 · limit/in-flight friendli:128/128 429s=0
+push: exit 0 
