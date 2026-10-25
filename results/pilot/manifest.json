@@ -6,6 +6,13 @@
   "max_in_flight": 64,
   "max_cost": 3.0,
   "push_every_s": 180,
+  "local_arms": [
+   "bayes",
+   "random",
+   "oracle",
+   "always_first",
+   "copy_last"
+  ],
   "arms": [
    {
     "arm": "qwen25-7b",
@@ -16,33 +23,13 @@
     "max_tokens": 16,
     "thinking": null,
     "thinking_budget": null
-   },
-   {
-    "arm": "gemma4-31b",
-    "model_id": "google/gemma-4-31b-it",
-    "provider": "crusoe",
-    "quantization": "bf16",
-    "temperature": 0.0,
-    "max_tokens": 16,
-    "thinking": false,
-    "thinking_budget": null
-   },
-   {
-    "arm": "gemma4-31b-think",
-    "model_id": "google/gemma-4-31b-it",
-    "provider": "crusoe",
-    "quantization": "bf16",
-    "temperature": 0.0,
-    "max_tokens": 4096,
-    "thinking": true,
-    "thinking_budget": 1024
    }
   ]
  },
  "git": {
-  "sha": "ff81dfdcc0fbca302f61cc2d57922c0adcd6af88",
+  "sha": "177ee7e5e820257f479665c083c2a9cbe24aa8a9",
   "branch": "claude/peaceful-planck-1swzju",
-  "dirty": true
+  "dirty": false
  },
  "users": [
   378,
@@ -67,88 +54,22 @@
      "include": true
     }
    }
-  },
-  "gemma4-31b": {
-   "model_id": "google/gemma-4-31b-it",
-   "provider": "crusoe",
-   "quantization": "bf16",
-   "request_params": {
-    "model": "google/gemma-4-31b-it",
-    "temperature": 0.0,
-    "max_tokens": 16,
-    "provider": {
-     "only": [
-      "crusoe"
-     ],
-     "allow_fallbacks": false,
-     "quantizations": [
-      "bf16"
-     ]
-    },
-    "usage": {
-     "include": true
-    },
-    "reasoning": {
-     "enabled": false
-    }
-   }
-  },
-  "gemma4-31b-think": {
-   "model_id": "google/gemma-4-31b-it",
-   "provider": "crusoe",
-   "quantization": "bf16",
-   "request_params": {
-    "model": "google/gemma-4-31b-it",
-    "temperature": 0.0,
-    "max_tokens": 4096,
-    "provider": {
-     "only": [
-      "crusoe"
-     ],
-     "allow_fallbacks": false,
-     "quantizations": [
-      "bf16"
-     ]
-    },
-    "usage": {
-     "include": true
-    },
-    "reasoning": {
-     "max_tokens": 1024
-    }
-   }
   }
  },
  "python": "3.11.17",
- "started": "2026-10-25T11:36:19+0000",
- "log_entries_at_start": 2469,
- "status": "aborted: RequestFailed: gemma4-31b-think: still rate-limited after 1800s",
- "finished": "2026-10-25T12:06:22+0000",
- "served": {
-  "gemma4-31b": {
-   "provider": "Crusoe",
-   "model": "google/gemma-4-31b-it"
-  },
-  "gemma4-31b-think": {
-   "provider": "Crusoe",
-   "model": "google/gemma-4-31b-it"
-  }
- },
- "cost_this_session_usd": 0.462719,
- "network_calls_this_session": 1055,
- "log_hits_this_session": 2769,
- "concurrency": {
-  "crusoe": {
-   "final_limit": 8,
-   "peak_in_flight": 64,
-   "halvings_on_429": 405,
-   "rate_limited_responses": 7754
-  }
- },
- "errors": {
-  "crusoe 429": 7754
- },
+ "started": "2026-10-25T12:06:49+0000",
+ "log_entries_at_start": 3161,
+ "status": "complete",
+ "finished": "2026-10-25T12:06:49+0000",
+ "served": {},
+ "cost_this_session_usd": 0.0,
+ "network_calls_this_session": 0,
+ "log_hits_this_session": 1516,
+ "concurrency": {},
+ "errors": {},
  "log_entries": 3161,
  "unique_keys": 3061,
- "duplicate_calls": 100
+ "duplicate_calls": 100,
+ "cost_total_usd": 0.085059,
+ "decisions": 7260
 }
