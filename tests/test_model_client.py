@@ -49,3 +49,25 @@ def test_rate_limit_then_success() -> None:
     c = client_with(httpx.MockTransport(handler))
     out = asyncio.run(c.complete(SPEC, [{"role": "user", "content": "x"}]))
     assert out.text == "The best option is Flight 1." and c.limits["p"].rate_limited == 1
+
+
+def test_limiter_caps_in_flight_and_serves_fifo() -> None:
+    from flight_prefs.model_client import AdaptiveLimit
+
+    async def go() -> tuple[int, list[int]]:
+        lim = AdaptiveLimit(limit=3, floor=1)
+        peak, order = 0, []
+
+        async def job(i: int) -> None:
+            nonlocal peak
+            async with lim:
+                peak = max(peak, lim.in_flight)
+                order.append(i)
+                await asyncio.sleep(0.001)
+
+        await asyncio.gather(*(job(i) for i in range(50)))
+        assert lim.in_flight == 0
+        return peak, order
+
+    peak, order = asyncio.run(go())
+    assert peak == 3 and order == list(range(50))

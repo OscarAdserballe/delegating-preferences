@@ -6,7 +6,7 @@ import asyncio
 import os
 import random
 import time
-from collections import Counter
+from collections import Counter, deque
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -77,7 +77,10 @@ class OutOfCredits(RequestFailed):
 
 @dataclass
 class AdaptiveLimit:
-    """AIMD concurrency: halve on a 429 (at most once per `cooldown_s`), +1 after `limit` successes in a row."""
+    """AIMD concurrency: halve on a 429 (at most once per `cooldown_s`), +1 after `limit` successes in a row.
+
+    Waiters queue FIFO and are woken one per free slot, so tens of thousands of queued calls cost nothing.
+    """
 
     limit: float = 64
     floor: int = 8  # 429s are free, and a shared upstream pool recovers in bursts
@@ -89,38 +92,51 @@ class AdaptiveLimit:
     halvings: int = 0
     rate_limited: int = 0
     last_halving: float = -1e9
-    _cond: asyncio.Condition = field(default_factory=asyncio.Condition)
+    _waiters: deque[asyncio.Future[None]] = field(default_factory=deque)
+
+    def _wake(self) -> None:
+        while self._waiters and self.in_flight < int(self.limit):
+            fut = self._waiters.popleft()
+            if not fut.done():
+                self.in_flight += 1
+                fut.set_result(None)
 
     async def __aenter__(self) -> AdaptiveLimit:
-        async with self._cond:
-            await self._cond.wait_for(lambda: self.in_flight < int(self.limit))
+        if self.in_flight < int(self.limit) and not self._waiters:
             self.in_flight += 1
-            self.peak = max(self.peak, self.in_flight)
+        else:
+            fut: asyncio.Future[None] = asyncio.get_running_loop().create_future()
+            self._waiters.append(fut)
+            try:
+                await fut
+            except asyncio.CancelledError:
+                if fut.done() and not fut.cancelled():
+                    self.in_flight -= 1  # granted a slot just as we were cancelled
+                    self._wake()
+                raise
+        self.peak = max(self.peak, self.in_flight)
         return self
 
     async def __aexit__(self, *exc: object) -> None:
-        async with self._cond:
-            self.in_flight -= 1
-            self._cond.notify_all()
+        self.in_flight -= 1
+        self._wake()
 
     async def on_success(self) -> None:
-        async with self._cond:
-            self.successes += 1
-            if self.successes >= self.limit:
-                self.limit = min(self.ceiling, self.limit + 1)
-                self.successes = 0
-                self._cond.notify_all()
+        self.successes += 1
+        if self.successes >= self.limit:
+            self.limit = min(self.ceiling, self.limit + 1)
+            self.successes = 0
+            self._wake()
 
     async def on_rate_limited(self) -> None:
         """A burst of 429s from requests already in flight is one signal, not many."""
-        async with self._cond:
-            self.rate_limited += 1
-            self.successes = 0
-            now = time.monotonic()
-            if now - self.last_halving >= self.cooldown_s:
-                self.limit = max(self.floor, self.limit / 2)
-                self.halvings += 1
-                self.last_halving = now
+        self.rate_limited += 1
+        self.successes = 0
+        now = time.monotonic()
+        if now - self.last_halving >= self.cooldown_s:
+            self.limit = max(self.floor, self.limit / 2)
+            self.halvings += 1
+            self.last_halving = now
 
 
 @dataclass
