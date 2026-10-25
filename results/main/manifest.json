@@ -167,5 +167,35 @@
  "python": "3.11.17",
  "started": "2026-10-25T14:55:38+0000",
  "log_entries_at_start": 56988,
- "status": "running"
+ "status": "complete",
+ "finished": "2026-10-25T16:05:45+0000",
+ "served": {
+  "gemma4-31b-think": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  },
+  "gemma4-31b": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  }
+ },
+ "cost_this_session_usd": 12.133638,
+ "network_calls_this_session": 43220,
+ "log_hits_this_session": 75937,
+ "concurrency": {
+  "friendli": {
+   "final_limit": 68.11434876918793,
+   "peak_in_flight": 155,
+   "halvings_on_429": 23,
+   "rate_limited_responses": 72
+  }
+ },
+ "errors": {
+  "friendli 429": 72
+ },
+ "log_entries": 100208,
+ "unique_keys": 98685,
+ "duplicate_calls": 1523,
+ "cost_total_usd": 23.430006,
+ "decisions": 242000
 }
