@@ -49,3 +49,42 @@ push: exit 0
 push: exit 0 
 [  2221s] dialogues 324/400 · network 68349 · log hits 39460 · $6.5182 · limit/in-flight friendli:110/110 429s=31 phala:124/0 429s=3
 [  2260s] dialogues 324/400 · network 68563 · log hits 39460 · $6.6420 · limit/in-flight friendli:56/0 429s=32 phala:124/0 429s=3
+push: exit 0 
+Traceback (most recent call last):
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/scripts/run_experiment.py", line 55, in <module>
+    main()
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/scripts/run_experiment.py", line 36, in main
+    run_dir = asyncio.run(run(cfg, progress_every=args.progress_every))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/experiment.py", line 253, in run
+    raise error
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/experiment.py", line 209, in run
+    for recs in await asyncio.gather(*tasks):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/experiment.py", line 201, in one
+    recs = await job()
+           ^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/interaction_loop.py", line 92, in run_user
+    return [*dialogue, *await asyncio.gather(*tasks)]
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/interaction_loop.py", line 77, in score
+    d = await agent.choose(state, menu)  # a branch: no feedback, never enters the dialogue
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/agents/llm.py", line 52, in choose
+    reply = await self.client.complete(self.spec, messages)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/call_log.py", line 101, in complete
+    c = await self.inner.complete(spec, messages)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/masters-thesis/bayesian-teaching-replication-and-economic-extension/src/flight_prefs/model_client.py", line 226, in complete
+    raise RequestFailed(f"{spec.arm}: still rate-limited after {self.rate_limit_patience_s:.0f}s")
+flight_prefs.model_client.RequestFailed: gemma4-31b-think: still rate-limited after 1800s

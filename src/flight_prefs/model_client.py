@@ -191,7 +191,8 @@ class OpenRouterClient:
         body = {**spec.request_params(), "messages": messages}
         limit = self.limit_for(spec.provider)
         last_error = ""
-        failures, rate_limited, started = 0, 0, time.monotonic()
+        failures, rate_limited = 0, 0
+        first_429: float | None = None  # patience counts from the first 429, not from time spent queued
         while True:
             async with limit:
                 t0 = time.monotonic()
@@ -222,7 +223,8 @@ class OpenRouterClient:
                 self.errors[f"{spec.provider} 429"] += 1
                 await limit.on_rate_limited()
                 rate_limited += 1
-                if time.monotonic() - started > self.rate_limit_patience_s:
+                first_429 = first_429 or time.monotonic()
+                if time.monotonic() - first_429 > self.rate_limit_patience_s:
                     raise RequestFailed(f"{spec.arm}: still rate-limited after {self.rate_limit_patience_s:.0f}s")
                 await asyncio.sleep(min(30.0, 2 ** min(rate_limited, 5)) * (0.5 + random.random()))
                 continue
