@@ -1,0 +1,171 @@
+{
+ "run_id": "main",
+ "config": {
+  "run_id": "main",
+  "n_users": 50,
+  "max_in_flight": 64,
+  "max_cost": 50.0,
+  "push_every_s": 180,
+  "arms": [
+   {
+    "arm": "qwen25-7b",
+    "model_id": "qwen/qwen-2.5-7b-instruct",
+    "provider": "phala",
+    "quantization": null,
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "thinking": null,
+    "thinking_budget": null,
+    "force_answer": false
+   },
+   {
+    "arm": "gemma4-31b",
+    "model_id": "google/gemma-4-31b-it",
+    "provider": "friendli",
+    "quantization": null,
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "thinking": false,
+    "thinking_budget": null,
+    "force_answer": false
+   },
+   {
+    "arm": "gemma4-31b-think",
+    "model_id": "google/gemma-4-31b-it",
+    "provider": "friendli",
+    "quantization": null,
+    "temperature": 0.0,
+    "max_tokens": 1056,
+    "thinking": true,
+    "thinking_budget": 1024,
+    "force_answer": true
+   }
+  ]
+ },
+ "git": {
+  "sha": "ac999c357e0deb486f86527757a7d86196241f81",
+  "branch": "claude/peaceful-planck-1swzju",
+  "dirty": false
+ },
+ "users": [
+  378,
+  381,
+  568,
+  281,
+  260,
+  19,
+  541,
+  109,
+  7,
+  436,
+  123,
+  345,
+  392,
+  569,
+  61,
+  77,
+  28,
+  310,
+  241,
+  230,
+  567,
+  424,
+  514,
+  343,
+  283,
+  422,
+  515,
+  257,
+  23,
+  271,
+  156,
+  544,
+  41,
+  88,
+  126,
+  35,
+  365,
+  399,
+  336,
+  169,
+  102,
+  446,
+  111,
+  174,
+  202,
+  216,
+  473,
+  402,
+  526,
+  608
+ ],
+ "models": {
+  "qwen25-7b": {
+   "model_id": "qwen/qwen-2.5-7b-instruct",
+   "provider": "phala",
+   "quantization": null,
+   "request_params": {
+    "model": "qwen/qwen-2.5-7b-instruct",
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "provider": {
+     "only": [
+      "phala"
+     ],
+     "allow_fallbacks": false
+    },
+    "usage": {
+     "include": true
+    }
+   }
+  },
+  "gemma4-31b": {
+   "model_id": "google/gemma-4-31b-it",
+   "provider": "friendli",
+   "quantization": null,
+   "request_params": {
+    "model": "google/gemma-4-31b-it",
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "provider": {
+     "only": [
+      "friendli"
+     ],
+     "allow_fallbacks": false
+    },
+    "usage": {
+     "include": true
+    },
+    "reasoning": {
+     "enabled": false
+    }
+   }
+  },
+  "gemma4-31b-think": {
+   "model_id": "google/gemma-4-31b-it",
+   "provider": "friendli",
+   "quantization": null,
+   "request_params": {
+    "model": "google/gemma-4-31b-it",
+    "temperature": 0.0,
+    "max_tokens": 1056,
+    "provider": {
+     "only": [
+      "friendli"
+     ],
+     "allow_fallbacks": false
+    },
+    "usage": {
+     "include": true
+    },
+    "reasoning": {
+     "max_tokens": 1024
+    }
+   }
+  }
+ },
+ "python": "3.11.17",
+ "started": "2026-10-25T13:53:38+0000",
+ "log_entries_at_start": 4275,
+ "status": "running"
+}
