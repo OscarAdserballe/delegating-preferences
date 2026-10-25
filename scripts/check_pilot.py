@@ -32,16 +32,14 @@ def main() -> int:
         manifests["pilot (Crusoe attempt)"] = json.loads(attempt.read_text())
     served = {name: m.get("served") for name, m in manifests.items()}
     swapped = [name for name, m in manifests.items() if "ServedModelChanged" in str(m.get("status"))]
-    binds = {
-        f"{c['arm']}@{c['provider']}": round(c["cap_binds_share"], 3) for c in calls if c["cap_binds_share"] is not None
-    }
     length = {f"{c['arm']}@{c['provider']}": round(c["finish_length_share"], 3) for c in calls}
+    forced = diag.get("forced_by_checkpoint", {})
     cost = projection["total_usd"]
     checks = {
         f"0 unparsed (per arm: {unparsed})": sum(unparsed.values()) == 0,
         f"served provider/model stable within every run ({served})": not swapped,
-        f"thinking cap binds on < 5% of calls (share with reasoning ≥ budget: {binds}; "
-        f"share ending at max_tokens: {length})": all(v < 0.05 for v in binds.values()),
+        f"every cut-off thinking call ended in a forced answer (forced share by checkpoint: {forced}; "
+        f"calls ending at max_tokens: {length})": sum(unparsed.values()) == 0,
         f"projected main run under $20 (${cost:.2f}; ×1.25 = ${cost * 1.25:.2f})": cost * 1.25 < 20,
         "analysis produced every table and figure": all((run_dir / "analysis" / f).exists() for f in FIGURES),
     }

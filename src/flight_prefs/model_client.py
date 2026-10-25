@@ -27,10 +27,12 @@ class ModelSpec:
     temperature: float = 0.0
     max_tokens: int = 16
     thinking: bool | None = None  # None = don't send a reasoning parameter at all
-    thinking_budget: int | None = None  # reasoning.max_tokens when thinking
+    thinking_budget: int | None = None  # reasoning.max_tokens when thinking (a hint providers may ignore)
+    force_answer: bool = False  # cut off at max_tokens without an answer → one no-thinking call to answer now
 
     def request_params(self) -> dict[str, Any]:
-        """Everything except messages that goes into the request body (and the call key)."""
+        """Everything except messages that goes into the request body (and the call key); force_answer is
+        agent behaviour, not a request parameter."""
         provider: dict[str, Any] = {"only": [self.provider], "allow_fallbacks": False}
         if self.quantization:
             provider["quantizations"] = [self.quantization]

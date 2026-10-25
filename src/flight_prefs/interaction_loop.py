@@ -26,6 +26,7 @@ class DecisionRecord:
     correct_tie_aware: bool  # pick is one of the best options under θ
     regret: float
     retried: bool = False
+    forced: bool = False
     prompt_tokens: int = 0
     completion_tokens: int = 0
     reasoning_tokens: int = 0
@@ -58,6 +59,7 @@ def _record(
         correct_tie_aware=d.pick is not None and d.pick in best_options(user.theta, menu),
         regret=regret(user.theta, menu, d.pick),
         retried=d.retried,
+        forced=d.forced,
         prompt_tokens=u.prompt_tokens if u else 0,
         completion_tokens=u.completion_tokens if u else 0,
         reasoning_tokens=u.reasoning_tokens if u else 0,

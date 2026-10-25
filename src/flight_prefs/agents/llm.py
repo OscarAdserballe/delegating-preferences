@@ -1,4 +1,8 @@
-"""LLMAgent: structured state → the paper's prompt → model → parsed pick (one retry with a format reminder)."""
+"""LLMAgent: structured state → the paper's prompt → model → parsed pick.
+
+No pick: if thinking was cut off at max_tokens (and the arm forces answers), one no-thinking call answers from the
+partial thinking; otherwise one retry with a format reminder.
+"""
 
 from __future__ import annotations
 
@@ -33,12 +37,28 @@ class LLMAgent:
         self.client = client
         self.name = spec.arm
 
+    def _cut_off(self, reply: Completion) -> bool:
+        return self.spec.force_answer and reply.usage.finish_reason == "length"
+
+    async def _force(self, messages: list[dict[str, str]], reply: Completion, usage: Usage, retried: bool) -> Decision:
+        spec = replace(self.spec, thinking=False, thinking_budget=None, max_tokens=16, force_answer=False)
+        partial = reply.thinking or reply.text or ""
+        answer = await self.client.complete(spec, prompts.with_forced_answer(messages, partial))
+        pick = answer_parsing.parse_pick(answer.text)
+        return Decision(pick, answer.text, reply.thinking, _sum(usage, answer.usage), retried=retried, forced=True)
+
     async def choose(self, state: DialogueState, menu: Menu) -> Decision:
         messages = prompts.build_messages(state, menu)
         reply = await self.client.complete(self.spec, messages)
         pick = answer_parsing.parse_pick(reply.text)
         if pick is not None:
             return Decision(pick, reply.text, reply.thinking, reply.usage)
-        retry = await self.client.complete(self.spec, prompts.with_format_reminder(messages))
+        if self._cut_off(reply):
+            return await self._force(messages, reply, reply.usage, retried=False)
+        reminded = prompts.with_format_reminder(messages)
+        retry = await self.client.complete(self.spec, reminded)
+        usage = _sum(reply.usage, retry.usage)
         pick = answer_parsing.parse_pick(retry.text)
-        return Decision(pick, retry.text, retry.thinking, _sum(reply.usage, retry.usage), retried=True)
+        if pick is None and self._cut_off(retry):
+            return await self._force(reminded, retry, usage, retried=True)
+        return Decision(pick, retry.text, retry.thinking, usage, retried=True)

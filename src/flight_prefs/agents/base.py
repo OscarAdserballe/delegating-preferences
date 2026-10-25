@@ -44,6 +44,7 @@ class Decision:
     thinking: str | None = None
     usage: Usage | None = None
     retried: bool = False
+    forced: bool = False  # thinking hit the cap; the pick came from a 'stop thinking and answer now' call
 
 
 class Agent(Protocol):

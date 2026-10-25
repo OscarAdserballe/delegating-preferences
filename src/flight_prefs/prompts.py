@@ -12,6 +12,7 @@ INSTRUCTION = (
 )
 QUESTION = "Which flight is the best option?"
 FORMAT_REMINDER = "Answer with exactly one sentence of the form 'The best option is Flight N.'"
+FORCE_ANSWER = f"Stop thinking and answer now. {FORMAT_REMINDER}"
 
 
 def render_menu(menu: Menu) -> str:
@@ -57,6 +58,15 @@ def build_messages(state: DialogueState, menu: Menu) -> list[dict[str, str]]:
 def with_format_reminder(messages: list[dict[str, str]]) -> list[dict[str, str]]:
     *head, last = messages
     return [*head, {"role": last["role"], "content": f"{last['content']}\n\n{FORMAT_REMINDER}"}]
+
+
+def with_forced_answer(messages: list[dict[str, str]], partial_thinking: str) -> list[dict[str, str]]:
+    """Budget forcing: the cut-off thinking goes back as the assistant's turn, then the user asks for the answer."""
+    return [
+        *messages,
+        {"role": "assistant", "content": partial_thinking.strip()},
+        {"role": "user", "content": FORCE_ANSWER},
+    ]
 
 
 def transcript(messages: list[dict[str, str]]) -> str:

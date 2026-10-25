@@ -1,5 +1,6 @@
-# S3 pilot: the first 2 sampled users, all arms. Same arm settings as main.toml.
-run_id = "pilot"
+# S3 pilot (second run, after the provider and thinking-cap decision): the first 2 sampled users, all arms.
+# Same arm settings as main.toml.
+run_id = "pilot2"
 n_users = 2
 max_in_flight = 64
 max_cost = 3.0
@@ -14,16 +15,17 @@ max_tokens = 16
 [[arms]]
 arm = "gemma4-31b"
 model_id = "google/gemma-4-31b-it"
-provider = "crusoe"         # bf16; Novita (also bf16) is excluded by the account's privacy settings
-quantization = "bf16"
+provider = "friendli"       # quantisation not stated; Crusoe (bf16) is throttled by OpenRouter's shared pool,
+                            # Novita (bf16) is excluded by the account's privacy settings. Friendli's picks match
+                            # Crusoe's on 96% of identical prompts (S3 pilot).
 max_tokens = 16
 thinking = false
 
 [[arms]]
 arm = "gemma4-31b-think"
 model_id = "google/gemma-4-31b-it"
-provider = "crusoe"
-quantization = "bf16"
-max_tokens = 4096           # room for the answer even if the provider overruns the thinking budget
+provider = "friendli"
+max_tokens = 1056           # the enforced cap: 1,024 thinking + 32 answer tokens (providers ignore thinking_budget)
 thinking = true
 thinking_budget = 1024
+force_answer = true         # cut off → "Stop thinking and answer now" with the partial thinking, thinking off

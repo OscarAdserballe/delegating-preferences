@@ -70,3 +70,36 @@ def test_call_key_ignores_arm_but_not_params() -> None:
     a = ModelSpec(arm="a", model_id="m", provider="p")
     assert call_key(a, msgs) == call_key(ModelSpec(arm="b", model_id="m", provider="p"), msgs)
     assert call_key(a, msgs) != call_key(ModelSpec(arm="a", model_id="m", provider="p", thinking=True), msgs)
+
+
+class Rambler:
+    """Thinks past the cap on every thinking call; answers when thinking is off."""
+
+    def __init__(self) -> None:
+        self.seen: list[tuple[bool | None, list[dict[str, str]]]] = []
+
+    async def complete(self, spec: ModelSpec, messages: list[dict[str, str]]) -> Completion:
+        self.seen.append((spec.thinking, messages))
+        if spec.thinking:
+            return Completion(text="", thinking="Flight 1 is cheap… but Flight 3", usage=Usage(finish_reason="length"))
+        return Completion(text="The best option is Flight 3.", thinking=None, usage=Usage(finish_reason="stop"))
+
+
+def test_cut_off_thinking_is_forced_to_answer(data: PaperData) -> None:
+    spec = ModelSpec(
+        arm="t", model_id="m", provider="p", max_tokens=1056, thinking=True, thinking_budget=1024, force_answer=True
+    )
+    server = Rambler()
+    d = asyncio.run(LLMAgent(spec, server).choose(DialogueState(), data.heldout[0]))  # type: ignore[arg-type]
+    assert d.pick == 2 and d.forced and not d.retried
+    assert d.thinking == "Flight 1 is cheap… but Flight 3"
+    (t1, _), (t2, forced_msgs) = server.seen
+    assert t1 is True and t2 is False
+    assert forced_msgs[-2] == {"role": "assistant", "content": "Flight 1 is cheap… but Flight 3"}
+    assert forced_msgs[-1]["content"] == prompts.FORCE_ANSWER
+
+
+def test_no_forcing_unless_configured(data: PaperData) -> None:
+    spec = ModelSpec(arm="t", model_id="m", provider="p", thinking=True)
+    d = asyncio.run(LLMAgent(spec, Rambler()).choose(DialogueState(), data.heldout[0]))  # type: ignore[arg-type]
+    assert d.pick is None and d.retried and not d.forced
