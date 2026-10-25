@@ -1,0 +1,126 @@
+{
+ "run_id": "pilot",
+ "config": {
+  "run_id": "pilot",
+  "n_users": 2,
+  "max_in_flight": 64,
+  "max_cost": 3.0,
+  "push_every_s": 180,
+  "arms": [
+   {
+    "arm": "qwen25-7b",
+    "model_id": "qwen/qwen-2.5-7b-instruct",
+    "provider": "phala",
+    "quantization": null,
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "thinking": null,
+    "thinking_budget": null
+   },
+   {
+    "arm": "gemma4-31b",
+    "model_id": "google/gemma-4-31b-it",
+    "provider": "crusoe",
+    "quantization": "bf16",
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "thinking": false,
+    "thinking_budget": null
+   },
+   {
+    "arm": "gemma4-31b-think",
+    "model_id": "google/gemma-4-31b-it",
+    "provider": "crusoe",
+    "quantization": "bf16",
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "thinking": true,
+    "thinking_budget": 1024
+   }
+  ]
+ },
+ "git": {
+  "sha": "790f9a1ab55b7d5d50dbbc1d7a2cc8fe259ac171",
+  "branch": "claude/peaceful-planck-1swzju",
+  "dirty": true
+ },
+ "users": [
+  378,
+  381
+ ],
+ "models": {
+  "qwen25-7b": {
+   "model_id": "qwen/qwen-2.5-7b-instruct",
+   "provider": "phala",
+   "quantization": null,
+   "request_params": {
+    "model": "qwen/qwen-2.5-7b-instruct",
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "provider": {
+     "only": [
+      "phala"
+     ],
+     "allow_fallbacks": false
+    },
+    "usage": {
+     "include": true
+    }
+   }
+  },
+  "gemma4-31b": {
+   "model_id": "google/gemma-4-31b-it",
+   "provider": "crusoe",
+   "quantization": "bf16",
+   "request_params": {
+    "model": "google/gemma-4-31b-it",
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "provider": {
+     "only": [
+      "crusoe"
+     ],
+     "allow_fallbacks": false,
+     "quantizations": [
+      "bf16"
+     ]
+    },
+    "usage": {
+     "include": true
+    },
+    "reasoning": {
+     "enabled": false
+    }
+   }
+  },
+  "gemma4-31b-think": {
+   "model_id": "google/gemma-4-31b-it",
+   "provider": "crusoe",
+   "quantization": "bf16",
+   "request_params": {
+    "model": "google/gemma-4-31b-it",
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "provider": {
+     "only": [
+      "crusoe"
+     ],
+     "allow_fallbacks": false,
+     "quantizations": [
+      "bf16"
+     ]
+    },
+    "usage": {
+     "include": true
+    },
+    "reasoning": {
+     "max_tokens": 1024
+    }
+   }
+  }
+ },
+ "python": "3.11.17",
+ "started": "2026-10-25T11:05:35+0000",
+ "log_entries_at_start": 1455,
+ "status": "running"
+}
