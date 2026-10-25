@@ -1,3 +1,8 @@
 run main: 400 dialogues, 3 LLM arms, 20511 logged calls to reuse
 [    60s] dialogues 269/400 · network 60149 · log hits 39460 · $0.2607 · limit/in-flight friendli:131/131 429s=0 phala:136/136 429s=0
 [   121s] dialogues 271/400 · network 60424 · log hits 39460 · $0.5030 · limit/in-flight friendli:68/124 429s=8 phala:73/73 429s=1
+[   181s] dialogues 272/400 · network 60854 · log hits 39460 · $0.7486 · limit/in-flight friendli:25/25 429s=16 phala:97/97 429s=1
+push: exit 0 
+[   241s] dialogues 274/400 · network 61121 · log hits 39460 · $0.9465 · limit/in-flight friendli:40/40 429s=16 phala:113/113 429s=1
+[   301s] dialogues 275/400 · network 61557 · log hits 39460 · $1.1878 · limit/in-flight friendli:45/45 429s=16 phala:127/127 429s=1
+[   361s] dialogues 275/400 · network 62021 · log hits 39460 · $1.4149 · limit/in-flight friendli:49/49 429s=16 phala:140/140 429s=1
