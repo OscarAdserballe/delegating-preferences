@@ -12,7 +12,7 @@ from flight_prefs.paper_data import Menu, User
 class RandomAgent:
     name = "random"
 
-    def __init__(self, seed: int = 0):
+    def __init__(self, seed: int = 1):
         self.seed = seed
 
     async def choose(self, state: DialogueState, menu: Menu) -> Decision:
@@ -33,7 +33,7 @@ class OracleAgent:
     async def choose(self, state: DialogueState, menu: Menu) -> Decision:
         if menu in self.labels:
             return Decision(pick=self.labels[menu])
-        return Decision(pick=argmax_random_tiebreak(menu.phi @ self.theta, 0, state, menu))
+        return Decision(pick=argmax_random_tiebreak(menu.phi @ self.theta, 3, state, menu))
 
 
 class AlwaysFirstAgent:
@@ -48,7 +48,7 @@ class CopyLastChoiceAgent:
 
     name = "copy_last"
 
-    def __init__(self, seed: int = 0):
+    def __init__(self, seed: int = 2):
         self.seed = seed
 
     async def choose(self, state: DialogueState, menu: Menu) -> Decision:
