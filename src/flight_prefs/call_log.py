@@ -27,6 +27,7 @@ class CallLog:
     def __init__(self, run_dir: Path):
         self.dir = run_dir / "calls"
         self.entries: dict[str, dict[str, Any]] = {}
+        self.in_flight: dict[str, asyncio.Future[Completion]] = {}  # shared, so users can't race on one key
         self.loaded = 0
         for path in sorted(self.dir.glob("*/*.jsonl.gz")):
             for line in _read_lines(path):
@@ -83,7 +84,6 @@ class CachedClient:
         self.inner, self.log, self.arm, self.user_id = inner, log, arm, user_id
         self.hits = 0
         self.network_calls = 0
-        self._in_flight: dict[str, asyncio.Future[Completion]] = {}
 
     async def complete(self, spec: ModelSpec, messages: list[dict[str, str]]) -> Completion:
         key = call_key(spec, messages)
@@ -91,10 +91,11 @@ class CachedClient:
         if hit is not None:
             self.hits += 1
             return hit
-        if key in self._in_flight:
-            return await asyncio.shield(self._in_flight[key])
+        if key in self.log.in_flight:
+            self.hits += 1
+            return await asyncio.shield(self.log.in_flight[key])
         fut: asyncio.Future[Completion] = asyncio.get_running_loop().create_future()
-        self._in_flight[key] = fut
+        self.log.in_flight[key] = fut
         try:
             self.network_calls += 1
             c = await self.inner.complete(spec, messages)
@@ -107,4 +108,4 @@ class CachedClient:
                 fut.exception()  # mark retrieved so an unawaited future doesn't warn
             raise
         finally:
-            del self._in_flight[key]
+            del self.log.in_flight[key]

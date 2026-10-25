@@ -114,7 +114,9 @@ class Progress:
     def line(self) -> str:
         net = sum(c.network_calls for c in self.clients)
         hits = sum(c.hits for c in self.clients)
-        lim = " ".join(f"{p}:{int(lim.limit)}/{lim.in_flight}" for p, lim in self.client.limits.items())
+        lim = " ".join(
+            f"{p}:{int(lim.limit)}/{lim.in_flight} 429s={lim.rate_limited}" for p, lim in self.client.limits.items()
+        )
         return (
             f"[{time.monotonic() - self.t0:6.0f}s] dialogues {self.done}/{self.total} · network {net} · "
             f"log hits {hits} · ${self.client.spend.total:.4f} · limit/in-flight {lim}"
@@ -226,9 +228,15 @@ async def run(cfg: RunConfig, progress_every: float = 30.0) -> Path:
             "network_calls_this_session": sum(c.network_calls for c in clients),
             "log_hits_this_session": sum(c.hits for c in clients),
             "concurrency": {
-                p: {"final_limit": lim.limit, "peak_in_flight": lim.peak, "halvings_on_429": lim.halvings}
+                p: {
+                    "final_limit": lim.limit,
+                    "peak_in_flight": lim.peak,
+                    "halvings_on_429": lim.halvings,
+                    "rate_limited_responses": lim.rate_limited,
+                }
                 for p, lim in client.limits.items()
             },
+            "errors": dict(client.errors),
             **stats,
         }
     )

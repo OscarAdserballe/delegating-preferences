@@ -6,6 +6,7 @@ import asyncio
 import os
 import random
 import time
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -70,15 +71,18 @@ class RequestFailed(RuntimeError):
 
 @dataclass
 class AdaptiveLimit:
-    """AIMD concurrency: halve on a 429, +1 after `limit` successes in a row."""
+    """AIMD concurrency: halve on a 429 (at most once per `cooldown_s`), +1 after `limit` successes in a row."""
 
     limit: float = 64
     floor: int = 1
     ceiling: int = 512
+    cooldown_s: float = 2.0
     in_flight: int = 0
     successes: int = 0
     peak: int = 0
     halvings: int = 0
+    rate_limited: int = 0
+    last_halving: float = -1e9
     _cond: asyncio.Condition = field(default_factory=asyncio.Condition)
 
     async def __aenter__(self) -> AdaptiveLimit:
@@ -102,10 +106,15 @@ class AdaptiveLimit:
                 self._cond.notify_all()
 
     async def on_rate_limited(self) -> None:
+        """A burst of 429s from requests already in flight is one signal, not many."""
         async with self._cond:
-            self.limit = max(self.floor, self.limit / 2)
+            self.rate_limited += 1
             self.successes = 0
-            self.halvings += 1
+            now = time.monotonic()
+            if now - self.last_halving >= self.cooldown_s:
+                self.limit = max(self.floor, self.limit / 2)
+                self.halvings += 1
+                self.last_halving = now
 
 
 @dataclass
@@ -123,12 +132,15 @@ class OpenRouterClient:
         max_cost: float | None = None,
         max_attempts: int = 8,
         timeout_s: float = 300.0,
+        rate_limit_patience_s: float = 1800.0,
     ):
         self.api_key = api_key or os.environ["OPENROUTER_API_KEY"]
         self.start_limit = max_in_flight
         self.limits: dict[str, AdaptiveLimit] = {}
         self.spend = Spend(max_cost=max_cost)
         self.max_attempts = max_attempts
+        self.rate_limit_patience_s = rate_limit_patience_s
+        self.errors: Counter[str] = Counter()
         self.served: dict[str, tuple[str, str]] = {}  # arm → (provider, model) first served
         self._http = httpx.AsyncClient(
             timeout=httpx.Timeout(timeout_s, connect=30.0),
@@ -157,30 +169,43 @@ class OpenRouterClient:
         body = {**spec.request_params(), "messages": messages}
         limit = self.limit_for(spec.provider)
         last_error = ""
-        for attempt in range(self.max_attempts):
+        failures, rate_limited, started = 0, 0, time.monotonic()
+        while True:
             async with limit:
                 t0 = time.monotonic()
                 try:
-                    resp = await self._http.post(URL, json=body)
+                    resp: httpx.Response | None = await self._http.post(URL, json=body)
                 except (httpx.TimeoutException, httpx.TransportError) as e:
                     last_error = f"{type(e).__name__}: {e}"
                     resp = None
                 latency = time.monotonic() - t0
+            is_429 = False
             if resp is not None:
                 data = _json(resp)
-                error = data.get("error") if isinstance(data, dict) else None
+                error = data.get("error")
                 if resp.status_code == 200 and not error and data.get("choices"):
                     completion = self._parse(spec, data, latency)
                     await limit.on_success()
                     return completion
-                code = (error or {}).get("code", resp.status_code) if isinstance(error, dict) else resp.status_code
+                code = error.get("code", resp.status_code) if isinstance(error, dict) else resp.status_code
                 last_error = f"HTTP {resp.status_code} {str(error or resp.text)[:300]}"
-                if resp.status_code == 429 or code == 429:
-                    await limit.on_rate_limited()
-                elif resp.status_code not in RETRYABLE_STATUS and resp.status_code != 200:
+                is_429 = resp.status_code == 429 or code == 429
+                if not is_429 and resp.status_code not in RETRYABLE_STATUS and resp.status_code != 200:
+                    self.errors[f"{spec.arm} fatal {resp.status_code}"] += 1
                     raise RequestFailed(f"{spec.arm}: {last_error}")
-            await asyncio.sleep(min(60.0, 2**attempt) * (0.5 + random.random()))
-        raise RequestFailed(f"{spec.arm}: gave up after {self.max_attempts} attempts; last: {last_error}")
+            if is_429:
+                self.errors[f"{spec.provider} 429"] += 1
+                await limit.on_rate_limited()
+                rate_limited += 1
+                if time.monotonic() - started > self.rate_limit_patience_s:
+                    raise RequestFailed(f"{spec.arm}: still rate-limited after {self.rate_limit_patience_s:.0f}s")
+                await asyncio.sleep(min(30.0, 2 ** min(rate_limited, 5)) * (0.5 + random.random()))
+                continue
+            failures += 1
+            self.errors[f"{spec.arm} {last_error[:40]}"] += 1
+            if failures >= self.max_attempts:
+                raise RequestFailed(f"{spec.arm}: gave up after {failures} failures; last: {last_error}")
+            await asyncio.sleep(min(60.0, 2**failures) * (0.5 + random.random()))
 
     def _parse(self, spec: ModelSpec, data: dict[str, Any], latency: float) -> Completion:
         choice = data["choices"][0]
