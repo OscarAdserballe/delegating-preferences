@@ -1,0 +1,119 @@
+{
+ "run_id": "probe-friendli",
+ "config": {
+  "run_id": "probe-friendli",
+  "n_users": 2,
+  "max_in_flight": 64,
+  "max_cost": 2.0,
+  "local_arms": [],
+  "arms": [
+   {
+    "arm": "gemma4-31b",
+    "model_id": "google/gemma-4-31b-it",
+    "provider": "friendli",
+    "quantization": null,
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "thinking": false,
+    "thinking_budget": null
+   },
+   {
+    "arm": "gemma4-31b-think",
+    "model_id": "google/gemma-4-31b-it",
+    "provider": "friendli",
+    "quantization": null,
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "thinking": true,
+    "thinking_budget": 1024
+   }
+  ]
+ },
+ "git": {
+  "sha": "460d81b1eef78b740a8b52004923f1515e0598ee",
+  "branch": "claude/peaceful-planck-1swzju",
+  "dirty": true
+ },
+ "users": [
+  378,
+  381
+ ],
+ "models": {
+  "gemma4-31b": {
+   "model_id": "google/gemma-4-31b-it",
+   "provider": "friendli",
+   "quantization": null,
+   "request_params": {
+    "model": "google/gemma-4-31b-it",
+    "temperature": 0.0,
+    "max_tokens": 16,
+    "provider": {
+     "only": [
+      "friendli"
+     ],
+     "allow_fallbacks": false
+    },
+    "usage": {
+     "include": true
+    },
+    "reasoning": {
+     "enabled": false
+    }
+   }
+  },
+  "gemma4-31b-think": {
+   "model_id": "google/gemma-4-31b-it",
+   "provider": "friendli",
+   "quantization": null,
+   "request_params": {
+    "model": "google/gemma-4-31b-it",
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "provider": {
+     "only": [
+      "friendli"
+     ],
+     "allow_fallbacks": false
+    },
+    "usage": {
+     "include": true
+    },
+    "reasoning": {
+     "max_tokens": 1024
+    }
+   }
+  }
+ },
+ "python": "3.11.17",
+ "started": "2026-10-25T11:41:36+0000",
+ "log_entries_at_start": 0,
+ "status": "complete",
+ "finished": "2026-10-25T11:45:55+0000",
+ "served": {
+  "gemma4-31b": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  },
+  "gemma4-31b-think": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  }
+ },
+ "cost_this_session_usd": 1.539166,
+ "network_calls_this_session": 2496,
+ "log_hits_this_session": 200,
+ "concurrency": {
+  "friendli": {
+   "final_limit": 95,
+   "peak_in_flight": 94,
+   "halvings_on_429": 0,
+   "rate_limited_responses": 0
+  }
+ },
+ "errors": {},
+ "log_entries": 2496,
+ "unique_keys": 2496,
+ "duplicate_calls": 0,
+ "cost_total_usd": 1.577031,
+ "decisions": 2420
+}

@@ -74,7 +74,7 @@ class AdaptiveLimit:
     """AIMD concurrency: halve on a 429 (at most once per `cooldown_s`), +1 after `limit` successes in a row."""
 
     limit: float = 64
-    floor: int = 1
+    floor: int = 8  # 429s are free, and a shared upstream pool recovers in bursts
     ceiling: int = 512
     cooldown_s: float = 2.0
     in_flight: int = 0

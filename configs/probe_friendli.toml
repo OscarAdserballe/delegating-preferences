@@ -1,0 +1,22 @@
+# Side probe for the S3 check-in: the pilot's Gemma arms on Friendli (no stated quantisation),
+# to compare its greedy picks with Crusoe (bf16) on identical prompts and to measure throughput.
+run_id = "probe-friendli"
+n_users = 2
+max_in_flight = 64
+max_cost = 2.0
+local_arms = []
+
+[[arms]]
+arm = "gemma4-31b"
+model_id = "google/gemma-4-31b-it"
+provider = "friendli"
+max_tokens = 16
+thinking = false
+
+[[arms]]
+arm = "gemma4-31b-think"
+model_id = "google/gemma-4-31b-it"
+provider = "friendli"
+max_tokens = 4096
+thinking = true
+thinking_budget = 1024
