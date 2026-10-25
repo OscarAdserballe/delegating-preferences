@@ -18,3 +18,4 @@ push: exit 0
 push: exit 0 
 [   795s] dialogues 264/400 · network 69380 · log hits 27741 · $0.9109 · limit/in-flight friendli:55/55 429s=14 phala:158/157 429s=2
 [   857s] dialogues 267/400 · network 69433 · log hits 27741 · $0.9951 · limit/in-flight friendli:58/57 429s=14 phala:161/161 429s=2
+[   886s] dialogues 267/400 · network 69457 · log hits 27741 · $1.0189 · limit/in-flight friendli:59/0 429s=14 phala:161/0 429s=2
