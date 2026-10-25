@@ -50,3 +50,7 @@ push: exit 0
 [  2220s] dialogues 356/400 · network 36675 · log hits 75937 · $5.4697 · limit/in-flight friendli:54/54 429s=53
 [  2280s] dialogues 356/400 · network 36915 · log hits 75937 · $5.6014 · limit/in-flight friendli:58/58 429s=53
 [  2340s] dialogues 356/400 · network 36968 · log hits 75937 · $5.6591 · limit/in-flight friendli:39/39 429s=54
+push: exit 0 
+[  2400s] dialogues 356/400 · network 37053 · log hits 75937 · $5.7518 · limit/in-flight friendli:47/47 429s=54
+[  2460s] dialogues 356/400 · network 37228 · log hits 75937 · $5.8748 · limit/in-flight friendli:51/51 429s=54
+[  2520s] dialogues 357/400 · network 37314 · log hits 75937 · $5.9712 · limit/in-flight friendli:62/62 429s=54
