@@ -216,14 +216,18 @@ def main() -> int:
         print(f"\n% of decisions needing the format reminder, by checkpoint\n{retry_cp}")
         if "forced" in llm and llm["forced"].any():
             forced_arms = llm[llm["arm"].isin(llm.loc[llm["forced"], "arm"].unique()) & (llm["kind"] == "heldout")]
-            forced_cp = (forced_arms.pivot_table(index="arm", columns="checkpoint", values="forced", aggfunc="mean")
-                         * 100).round(1)
+            forced_cp = (
+                forced_arms.pivot_table(index="arm", columns="checkpoint", values="forced", aggfunc="mean") * 100
+            ).round(1)
             split = forced_arms.groupby(["arm", "checkpoint", "forced"])["correct"].mean().unstack("forced") * 100
             print(f"\n% of held-out picks forced (thinking hit the cap), by checkpoint\n{forced_cp}")
-            print(f"\nAccuracy (%) of forced vs unforced held-out picks (descriptive: forcing is not random)\n"
-                  f"{split.round(1)}")
+            print(
+                f"\nAccuracy (%) of forced vs unforced held-out picks (descriptive: forcing is not random)\n"
+                f"{split.round(1)}"
+            )
             summary["diagnostics"]["forced_by_checkpoint"] = {
-                str(a): {str(c): float(v) for c, v in row.items()} for a, row in forced_cp.iterrows()}
+                str(a): {str(c): float(v) for c, v in row.items()} for a, row in forced_cp.iterrows()
+            }
             summary["diagnostics"]["forced_vs_unforced_accuracy"] = split.reset_index().to_dict("records")
         unparsed = llm[llm["unparsed"]]
         if len(unparsed):

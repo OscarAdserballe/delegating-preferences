@@ -71,6 +71,10 @@ class RequestFailed(RuntimeError):
     pass
 
 
+class OutOfCredits(RequestFailed):
+    """OpenRouter 402: top up, then rerun the same config; logged calls are not paid again."""
+
+
 @dataclass
 class AdaptiveLimit:
     """AIMD concurrency: halve on a 429 (at most once per `cooldown_s`), +1 after `limit` successes in a row."""
@@ -192,6 +196,9 @@ class OpenRouterClient:
                 code = error.get("code", resp.status_code) if isinstance(error, dict) else resp.status_code
                 last_error = f"HTTP {resp.status_code} {str(error or resp.text)[:300]}"
                 is_429 = resp.status_code == 429 or code == 429
+                if resp.status_code == 402 or code == 402:
+                    self.errors["402 out of credits"] += 1
+                    raise OutOfCredits(f"{spec.arm}: {last_error}")
                 if not is_429 and resp.status_code not in RETRYABLE_STATUS and resp.status_code != 200:
                     self.errors[f"{spec.arm} fatal {resp.status_code}"] += 1
                     raise RequestFailed(f"{spec.arm}: {last_error}")

@@ -2,7 +2,7 @@
 run_id = "main"
 n_users = 50
 max_in_flight = 64
-max_cost = 20.0
+max_cost = 50.0            # account balance is the real limit; on a 402 the run stops and resumes later
 push_every_s = 180
 
 [[arms]]
