@@ -1,0 +1,10 @@
+Projection for main.toml: 50 users × 3 LLM arms, from pilot2 (2 users)
+
+                  provider    calls  input_tokens_M  output_tokens_M  thinking_tokens_M  cost_usd  pilot_calls_per_s  hours_if_alone
+arm                                                                                                                                 
+qwen25-7b            phala  28100.0          18.110            0.366              0.000     1.884             11.800           0.661
+gemma4-31b        friendli  25350.0          16.741            0.228              0.000     2.435              9.250           0.761
+gemma4-31b-think  friendli  25350.0          45.130           23.766             14.668    15.825              7.092           0.993
+
+Total: 78,800 calls, $20.14 (×1.25 margin: $25.18); wall time ≈ 1.8 h (arms sharing a provider run back to back on its rate limit: {'friendli': 1.8, 'phala': 0.7})
+GATE (projected main run with 25% margin under $20): FAIL

@@ -1,0 +1,4 @@
+arm,provider,calls,reminder_calls,prompt_tokens_mean,completion_tokens_mean,reasoning_tokens_mean,reasoning_tokens_p50,reasoning_tokens_p95,reasoning_tokens_max,thinking_cap,cap_binds_share,finish_length_share,empty_text_share,latency_p50_s,latency_p95_s,cost_usd,providers
+gemma4-31b,Friendli,1110,0,620.8234234234234,9.0,0.0,0.0,0.0,0.0,,,0.0,0.0,0.5445,2.83655,0.10047196,['Friendli']
+gemma4-31b-think,Friendli,1749,639,1056.8599199542596,581.2121212121212,365.9862778730703,451.0,743.0,924.0,1024.0,0.0,0.3659233847913093,0.36363636363636365,6.825,14.383199999999997,0.66539872,['Friendli']
+qwen25-7b,Phala,1416,206,556.8001412429378,13.170197740112995,0.0,0.0,0.0,0.0,,,0.5953389830508474,0.0,1.476,2.7095000000000002,0.0825727,['Phala']

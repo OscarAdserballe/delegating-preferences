@@ -1,0 +1,44 @@
+{
+ "config": "main.toml",
+ "arms": [
+  {
+   "arm": "qwen25-7b",
+   "provider": "phala",
+   "calls": 28100.0,
+   "input_tokens_M": 18.11028,
+   "output_tokens_M": 0.366225,
+   "thinking_tokens_M": 0.0,
+   "cost_usd": 1.8842729999999999,
+   "pilot_calls_per_s": 11.8,
+   "hours_if_alone": 0.661487758945386
+  },
+  {
+   "arm": "gemma4-31b",
+   "provider": "friendli",
+   "calls": 25350.0,
+   "input_tokens_M": 16.74149,
+   "output_tokens_M": 0.22815,
+   "thinking_tokens_M": 0.0,
+   "cost_usd": 2.4350686,
+   "pilot_calls_per_s": 9.25,
+   "hours_if_alone": 0.7612612612612613
+  },
+  {
+   "arm": "gemma4-31b-think",
+   "provider": "friendli",
+   "calls": 25350.0,
+   "input_tokens_M": 45.130384,
+   "output_tokens_M": 23.766356,
+   "thinking_tokens_M": 14.667702,
+   "cost_usd": 15.824796160000002,
+   "pilot_calls_per_s": 7.091666666666667,
+   "hours_if_alone": 0.9929494712103408
+  }
+ ],
+ "total_usd": 20.14413776,
+ "throughput_calls_per_s": {
+  "gemma4-31b@friendli": 9.25,
+  "gemma4-31b-think@friendli": 7.091666666666667,
+  "qwen25-7b@phala": 11.8
+ }
+}

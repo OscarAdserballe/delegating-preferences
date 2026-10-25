@@ -21,9 +21,17 @@ uv run python scripts/download_paper_data.py   # Zenodo 17677329 → data/paper/
 | S2 | `uv run python scripts/run_experiment.py --config configs/s2_one_llm.toml` then `scripts/check_one_llm.py` | 605 parsed replies, 0 duplicate calls after kill + resume, transcript as Table H3 |
 | S3 | `run_experiment.py --config configs/pilot.toml`, `analyse_results.py results/pilot --add results/probe-friendli`, `estimate_cost.py --pilot results/pilot --add results/probe-friendli`, `check_pilot.py` | 0 unparsed, providers stable, thinking cap binds < 5%, main run projected < $20, every table and figure |
 
-S3 status: **gate fails** on Gemma 4 thinking (runaway thinking; no provider enforces the 1,024 budget),
-cost ($39 projected) and Crusoe throughput (shared-pool rate limits). See `results/pilot/analysis/`.
-`results/probe-friendli` holds both Gemma arms on Friendli for the same 2 users (Crusoe could not finish them).
+S3 status: first pilot (`results/pilot`) failed on runaway Gemma thinking, Crusoe throughput and cost. After the
+decision to move both Gemma arms to Friendli and cap thinking with a forced answer, `results/pilot2` passes every
+check except cost by a hair: $20.14 projected for the main run. Forced picks are flagged per decision (`forced`).
+
+## Thinking cap
+
+Providers ignore `reasoning.max_tokens`, so the cap is the output limit: 1,056 tokens (1,024 thinking + 32 answer).
+A call cut off there gets one follow-up with thinking off: the partial thinking as the assistant's turn, then
+"Stop thinking and answer now. Answer with exactly one sentence of the form 'The best option is Flight N.'".
+Those picks have `forced = True` in `decisions.parquet`; `analyse_results.py` reports the forced share and accuracy
+of forced vs unforced picks per checkpoint.
 
 ## Data notes
 
