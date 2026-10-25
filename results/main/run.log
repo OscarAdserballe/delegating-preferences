@@ -6,3 +6,7 @@ push: exit 0
 [   241s] dialogues 274/400 · network 61121 · log hits 39460 · $0.9465 · limit/in-flight friendli:40/40 429s=16 phala:113/113 429s=1
 [   301s] dialogues 275/400 · network 61557 · log hits 39460 · $1.1878 · limit/in-flight friendli:45/45 429s=16 phala:127/127 429s=1
 [   361s] dialogues 275/400 · network 62021 · log hits 39460 · $1.4149 · limit/in-flight friendli:49/49 429s=16 phala:140/140 429s=1
+push: exit 0 
+[   421s] dialogues 275/400 · network 62287 · log hits 39460 · $1.5553 · limit/in-flight friendli:56/56 429s=16 phala:150/150 429s=1
+[   481s] dialogues 276/400 · network 62567 · log hits 39460 · $1.7484 · limit/in-flight friendli:61/61 429s=16 phala:160/160 429s=1
+[   541s] dialogues 276/400 · network 63083 · log hits 39460 · $1.9659 · limit/in-flight friendli:64/64 429s=16 phala:169/169 429s=1
