@@ -38,3 +38,7 @@ push: exit 0
 [  1681s] dialogues 319/400 · network 66383 · log hits 39460 · $4.8744 · limit/in-flight friendli:70/70 429s=27 phala:124/0 429s=3
 [  1741s] dialogues 319/400 · network 66676 · log hits 39460 · $5.0277 · limit/in-flight friendli:37/37 429s=31 phala:124/0 429s=3
 [  1801s] dialogues 320/400 · network 66749 · log hits 39460 · $5.1133 · limit/in-flight friendli:48/48 429s=31 phala:124/0 429s=3
+push: exit 0 
+[  1861s] dialogues 320/400 · network 66776 · log hits 39460 · $5.2485 · limit/in-flight friendli:56/56 429s=31 phala:124/0 429s=3
+[  1921s] dialogues 321/400 · network 66947 · log hits 39460 · $5.4472 · limit/in-flight friendli:69/69 429s=31 phala:124/0 429s=3
+[  1981s] dialogues 322/400 · network 67237 · log hits 39460 · $5.6751 · limit/in-flight friendli:80/80 429s=31 phala:124/0 429s=3
