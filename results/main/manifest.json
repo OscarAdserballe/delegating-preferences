@@ -167,5 +167,45 @@
  "python": "3.11.17",
  "started": "2026-10-25T14:17:09+0000",
  "log_entries_at_start": 20511,
- "status": "running"
+ "status": "aborted: RequestFailed: gemma4-31b-think: still rate-limited after 1800s",
+ "finished": "2026-10-25T14:54:49+0000",
+ "served": {
+  "gemma4-31b-think": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  },
+  "qwen25-7b": {
+   "provider": "Phala",
+   "model": "qwen/qwen-2.5-7b-instruct"
+  },
+  "gemma4-31b": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  }
+ },
+ "cost_this_session_usd": 6.64203,
+ "network_calls_this_session": 68563,
+ "log_hits_this_session": 39460,
+ "concurrency": {
+  "friendli": {
+   "final_limit": 56.44140625,
+   "peak_in_flight": 136,
+   "halvings_on_429": 10,
+   "rate_limited_responses": 32
+  },
+  "phala": {
+   "final_limit": 124.25,
+   "peak_in_flight": 170,
+   "halvings_on_429": 2,
+   "rate_limited_responses": 3
+  }
+ },
+ "errors": {
+  "phala 429": 3,
+  "friendli 429": 32,
+  "gemma4-31b HTTP 503 <!DOCTYPE html>\n<!--[if lt IE 7": 1
+ },
+ "log_entries": 56988,
+ "unique_keys": 55465,
+ "duplicate_calls": 1523
 }
