@@ -1,3 +1,4 @@
 warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
 run main: 400 dialogues, 3 LLM arms, 7310 logged calls to reuse
 [    63s] dialogues 256/400 · network 60122 · log hits 27741 · $0.0722 · limit/in-flight friendli:257/257 429s=0 phala:257/246 429s=0
+[   124s] dialogues 258/400 · network 65087 · log hits 27741 · $0.2681 · limit/in-flight friendli:129/232 429s=8 phala:130/130 429s=2
