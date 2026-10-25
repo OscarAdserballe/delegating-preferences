@@ -1,0 +1,29 @@
+# S4 main run: the first 50 sampled users, all arms. The one real run.
+run_id = "main"
+n_users = 50
+max_in_flight = 64
+max_cost = 20.0
+push_every_s = 180
+
+[[arms]]
+arm = "qwen25-7b"
+model_id = "qwen/qwen-2.5-7b-instruct"
+provider = "phala"          # the only provider; it doesn't state its quantisation
+max_tokens = 16
+
+[[arms]]
+arm = "gemma4-31b"
+model_id = "google/gemma-4-31b-it"
+provider = "crusoe"         # bf16; Novita (also bf16) is excluded by the account's privacy settings
+quantization = "bf16"
+max_tokens = 16
+thinking = false
+
+[[arms]]
+arm = "gemma4-31b-think"
+model_id = "google/gemma-4-31b-it"
+provider = "crusoe"
+quantization = "bf16"
+max_tokens = 4096           # room for the answer even if the provider overruns the thinking budget
+thinking = true
+thinking_budget = 1024

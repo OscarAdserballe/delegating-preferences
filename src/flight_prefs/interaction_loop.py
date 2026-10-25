@@ -31,6 +31,8 @@ class DecisionRecord:
     reasoning_tokens: int = 0
     cost: float = 0.0
     finish_reason: str | None = None
+    raw_text: str | None = None
+    thinking_chars: int = 0
 
 
 def _record(
@@ -61,6 +63,8 @@ def _record(
         reasoning_tokens=u.reasoning_tokens if u else 0,
         cost=u.cost if u else 0.0,
         finish_reason=u.finish_reason if u else None,
+        raw_text=d.raw_text,
+        thinking_chars=len(d.thinking or ""),
     )
 
 
@@ -82,7 +86,7 @@ async def run_user(agent: Agent, user: User, heldout: tuple[Menu, ...], arm: str
             menu = user.rounds[r]
             d = await agent.choose(state, menu)
             dialogue.append(_record(arm, user, r, "dialogue", r, menu, user.choices[r], d))
-            state = state.after(PastRound(menu, d.pick, user.choices[r]))
+            state = state.after(PastRound(menu, d.pick, user.choices[r], d.raw_text if d.pick is None else None))
         return [*dialogue, *await asyncio.gather(*tasks)]
     except BaseException:
         for t in tasks:

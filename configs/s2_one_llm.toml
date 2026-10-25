@@ -1,0 +1,13 @@
+# S2: one LLM (Qwen), one user, end to end.
+run_id = "s2-one-llm"
+n_users = 1
+max_in_flight = 64
+max_cost = 0.5
+push_every_s = 180
+local_arms = ["bayes"]
+
+[[arms]]
+arm = "qwen25-7b"
+model_id = "qwen/qwen-2.5-7b-instruct"
+provider = "phala"          # the only provider; it doesn't state its quantisation
+max_tokens = 16

@@ -13,6 +13,7 @@ class PastRound:
     menu: Menu
     agent_pick: int | None
     user_pick: int
+    agent_reply: str | None = None  # kept only when agent_pick is None
 
 
 @dataclass(frozen=True)

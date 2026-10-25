@@ -1,0 +1,217 @@
+"""OpenRouter chat completions: pinned provider, no fallbacks, retries, adaptive concurrency, cost tracking."""
+
+from __future__ import annotations
+
+import asyncio
+import os
+import random
+import time
+from dataclasses import dataclass, field
+from typing import Any
+
+import httpx
+
+from flight_prefs.agents.base import Usage
+
+URL = "https://openrouter.ai/api/v1/chat/completions"
+RETRYABLE_STATUS = {408, 409, 425, 429, 500, 502, 503, 504, 520, 522, 524, 529}
+
+
+@dataclass(frozen=True)
+class ModelSpec:
+    arm: str  # "qwen25-7b", "gemma4-31b", "gemma4-31b-think"
+    model_id: str  # "google/gemma-4-31b-it"
+    provider: str  # pinned, e.g. "crusoe"
+    quantization: str | None = None  # e.g. "bf16"; None = don't filter (provider states none)
+    temperature: float = 0.0
+    max_tokens: int = 16
+    thinking: bool | None = None  # None = don't send a reasoning parameter at all
+    thinking_budget: int | None = None  # reasoning.max_tokens when thinking
+
+    def request_params(self) -> dict[str, Any]:
+        """Everything except messages that goes into the request body (and the call key)."""
+        provider: dict[str, Any] = {"only": [self.provider], "allow_fallbacks": False}
+        if self.quantization:
+            provider["quantizations"] = [self.quantization]
+        params: dict[str, Any] = {
+            "model": self.model_id,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "provider": provider,
+            "usage": {"include": True},
+        }
+        if self.thinking is not None:
+            reasoning: dict[str, Any] = {"enabled": self.thinking}
+            if self.thinking and self.thinking_budget:
+                reasoning = {"max_tokens": self.thinking_budget}
+            params["reasoning"] = reasoning
+        return params
+
+
+@dataclass(frozen=True)
+class Completion:
+    text: str
+    thinking: str | None
+    usage: Usage
+    generation_id: str | None = None
+
+
+class CostCeilingReached(RuntimeError):
+    pass
+
+
+class ServedModelChanged(RuntimeError):
+    pass
+
+
+class RequestFailed(RuntimeError):
+    pass
+
+
+@dataclass
+class AdaptiveLimit:
+    """AIMD concurrency: halve on a 429, +1 after `limit` successes in a row."""
+
+    limit: float = 64
+    floor: int = 1
+    ceiling: int = 512
+    in_flight: int = 0
+    successes: int = 0
+    peak: int = 0
+    halvings: int = 0
+    _cond: asyncio.Condition = field(default_factory=asyncio.Condition)
+
+    async def __aenter__(self) -> AdaptiveLimit:
+        async with self._cond:
+            await self._cond.wait_for(lambda: self.in_flight < int(self.limit))
+            self.in_flight += 1
+            self.peak = max(self.peak, self.in_flight)
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        async with self._cond:
+            self.in_flight -= 1
+            self._cond.notify_all()
+
+    async def on_success(self) -> None:
+        async with self._cond:
+            self.successes += 1
+            if self.successes >= self.limit:
+                self.limit = min(self.ceiling, self.limit + 1)
+                self.successes = 0
+                self._cond.notify_all()
+
+    async def on_rate_limited(self) -> None:
+        async with self._cond:
+            self.limit = max(self.floor, self.limit / 2)
+            self.successes = 0
+            self.halvings += 1
+
+
+@dataclass
+class Spend:
+    total: float = 0.0
+    calls: int = 0
+    max_cost: float | None = None
+
+
+class OpenRouterClient:
+    def __init__(
+        self,
+        api_key: str | None = None,
+        max_in_flight: int = 64,
+        max_cost: float | None = None,
+        max_attempts: int = 8,
+        timeout_s: float = 300.0,
+    ):
+        self.api_key = api_key or os.environ["OPENROUTER_API_KEY"]
+        self.start_limit = max_in_flight
+        self.limits: dict[str, AdaptiveLimit] = {}
+        self.spend = Spend(max_cost=max_cost)
+        self.max_attempts = max_attempts
+        self.served: dict[str, tuple[str, str]] = {}  # arm → (provider, model) first served
+        self._http = httpx.AsyncClient(
+            timeout=httpx.Timeout(timeout_s, connect=30.0),
+            limits=httpx.Limits(max_connections=1024, max_keepalive_connections=256),
+            headers={"Authorization": f"Bearer {self.api_key}", "X-Title": "bayesian-teaching-replication"},
+        )
+
+    async def aclose(self) -> None:
+        await self._http.aclose()
+
+    def limit_for(self, provider: str) -> AdaptiveLimit:
+        if provider not in self.limits:
+            self.limits[provider] = AdaptiveLimit(limit=self.start_limit)
+        return self.limits[provider]
+
+    def _check_served(self, spec: ModelSpec, provider: str, model: str) -> None:
+        first = self.served.setdefault(spec.arm, (provider, model))
+        if first != (provider, model):
+            raise ServedModelChanged(f"{spec.arm}: served {provider}/{model}, earlier {first[0]}/{first[1]}")
+        if provider.lower().split("/")[0] != spec.provider.lower():
+            raise ServedModelChanged(f"{spec.arm}: served by {provider}, pinned {spec.provider}")
+
+    async def complete(self, spec: ModelSpec, messages: list[dict[str, str]]) -> Completion:
+        if self.spend.max_cost is not None and self.spend.total >= self.spend.max_cost:
+            raise CostCeilingReached(f"spent ${self.spend.total:.4f} ≥ --max-cost ${self.spend.max_cost:.2f}")
+        body = {**spec.request_params(), "messages": messages}
+        limit = self.limit_for(spec.provider)
+        last_error = ""
+        for attempt in range(self.max_attempts):
+            async with limit:
+                t0 = time.monotonic()
+                try:
+                    resp = await self._http.post(URL, json=body)
+                except (httpx.TimeoutException, httpx.TransportError) as e:
+                    last_error = f"{type(e).__name__}: {e}"
+                    resp = None
+                latency = time.monotonic() - t0
+            if resp is not None:
+                data = _json(resp)
+                error = data.get("error") if isinstance(data, dict) else None
+                if resp.status_code == 200 and not error and data.get("choices"):
+                    completion = self._parse(spec, data, latency)
+                    await limit.on_success()
+                    return completion
+                code = (error or {}).get("code", resp.status_code) if isinstance(error, dict) else resp.status_code
+                last_error = f"HTTP {resp.status_code} {str(error or resp.text)[:300]}"
+                if resp.status_code == 429 or code == 429:
+                    await limit.on_rate_limited()
+                elif resp.status_code not in RETRYABLE_STATUS and resp.status_code != 200:
+                    raise RequestFailed(f"{spec.arm}: {last_error}")
+            await asyncio.sleep(min(60.0, 2**attempt) * (0.5 + random.random()))
+        raise RequestFailed(f"{spec.arm}: gave up after {self.max_attempts} attempts; last: {last_error}")
+
+    def _parse(self, spec: ModelSpec, data: dict[str, Any], latency: float) -> Completion:
+        choice = data["choices"][0]
+        message = choice.get("message") or {}
+        u = data.get("usage") or {}
+        provider, model = str(data.get("provider")), str(data.get("model"))
+        self._check_served(spec, provider, model)
+        cost = float(u.get("cost") or 0.0)
+        self.spend.total += cost
+        self.spend.calls += 1
+        usage = Usage(
+            prompt_tokens=int(u.get("prompt_tokens") or 0),
+            completion_tokens=int(u.get("completion_tokens") or 0),
+            reasoning_tokens=int((u.get("completion_tokens_details") or {}).get("reasoning_tokens") or 0),
+            cost=cost,
+            provider=provider,
+            model=model,
+            finish_reason=choice.get("finish_reason"),
+            latency_s=round(latency, 3),
+        )
+        return Completion(
+            text=message.get("content") or "",
+            thinking=message.get("reasoning"),
+            usage=usage,
+            generation_id=data.get("id"),
+        )
+
+
+def _json(resp: httpx.Response) -> dict[str, Any]:
+    try:
+        data = resp.json()
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
