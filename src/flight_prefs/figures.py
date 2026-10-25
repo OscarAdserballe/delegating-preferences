@@ -56,7 +56,7 @@ def results_figure(accuracy: pd.DataFrame, regret: pd.DataFrame, path: Path, tit
     fig, (a, b) = plt.subplots(1, 2, figsize=(11, 4.2), constrained_layout=True)
     _panel(a, accuracy, 100, "Held-out accuracy (%)", "Accuracy (paper's labels)")
     a.axhline(PAPER_QWEN_FINAL, color=MUTED, lw=0.8, ls=(0, (1, 2)))
-    a.annotate("paper: Qwen 2.5 7B, final round", (5, PAPER_QWEN_FINAL + 1), color=MUTED, fontsize=8, ha="right")
+    a.annotate("paper: Qwen 2.5 7B, final round", (5, PAPER_QWEN_FINAL - 4), color=MUTED, fontsize=8, ha="right")
     a.set_ylim(0, 102)
     _panel(b, regret, 1, "Mean utility regret (θᵀφ units)", "Utility regret")
     b.set_ylim(bottom=0)

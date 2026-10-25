@@ -13,6 +13,7 @@ import pandas as pd
 
 from flight_prefs import figures, metrics
 from flight_prefs.call_log import _read_lines
+from flight_prefs.prompts import FORCE_ANSWER, FORMAT_REMINDER
 
 ROOT = Path(__file__).resolve().parents[1]
 LLM_ORDER = ("qwen25-7b", "gemma4-31b", "gemma4-31b-think")
@@ -28,7 +29,8 @@ def call_stats(run_dirs: list[Path], budgets: dict[str, int | None]) -> pd.DataF
             rows.append(
                 {
                     "arm": e["arm"],
-                    "reminder": "Answer with exactly one sentence" in e["request"]["last_user"],
+                    "forced_answer": e["request"]["last_user"] == FORCE_ANSWER,
+                    "reminder": e["request"]["last_user"].endswith("\n\n" + FORMAT_REMINDER),
                     **{
                         k: u.get(k)
                         for k in (
@@ -58,6 +60,7 @@ def call_stats(run_dirs: list[Path], budgets: dict[str, int | None]) -> pd.DataF
                 "provider": provider,
                 "calls": len(g),
                 "reminder_calls": int(g["reminder"].sum()),
+                "forced_answer_calls": int(g["forced_answer"].sum()),
                 "prompt_tokens_mean": g["prompt_tokens"].mean(),
                 "completion_tokens_mean": g["completion_tokens"].mean(),
                 "reasoning_tokens_mean": r.mean(),

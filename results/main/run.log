@@ -92,3 +92,33 @@ push: exit 0
 [  4140s] dialogues 396/400 · network 43009 · log hits 75937 · $11.9242 · limit/in-flight friendli:61/61 429s=72
 [  4200s] dialogues 399/400 · network 43220 · log hits 75937 · $12.1319 · limit/in-flight friendli:68/6 429s=72
 [  4212s] dialogues 400/400 · network 43220 · log hits 75937 · $12.1336 · limit/in-flight friendli:68/0 429s=72
+push: exit 0 
+{
+ "status": "complete",
+ "decisions": 242000,
+ "network_calls_this_session": 43220,
+ "log_hits_this_session": 75937,
+ "log_entries": 100208,
+ "unique_keys": 98685,
+ "duplicate_calls": 1523,
+ "cost_this_session_usd": 12.133638,
+ "cost_total_usd": 23.430006,
+ "served": {
+  "gemma4-31b-think": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  },
+  "gemma4-31b": {
+   "provider": "Friendli",
+   "model": "google/gemma-4-31b-it"
+  }
+ },
+ "concurrency": {
+  "friendli": {
+   "final_limit": 68.11434876918793,
+   "peak_in_flight": 155,
+   "halvings_on_429": 23,
+   "rate_limited_responses": 72
+  }
+ }
+}
