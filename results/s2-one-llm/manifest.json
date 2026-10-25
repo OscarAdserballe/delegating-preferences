@@ -5,7 +5,7 @@
   "n_users": 1,
   "max_in_flight": 64,
   "max_cost": 0.5,
-  "push_every_s": 180,
+  "push_every_s": 0.0,
   "local_arms": [
    "bayes"
   ],
@@ -23,9 +23,9 @@
   ]
  },
  "git": {
-  "sha": "67119c00c2cff123de639e30fbbc5ab18c767c62",
+  "sha": "7261a12d4fd3bc4aaff729b3a4eac829266b7e7a",
   "branch": "claude/peaceful-planck-1swzju",
-  "dirty": false
+  "dirty": true
  },
  "users": [
   378
@@ -52,19 +52,19 @@
   }
  },
  "python": "3.11.17",
- "started": "2026-10-25T10:59:40+0000",
- "log_entries_at_start": 377,
+ "started": "2026-10-25T11:00:39+0000",
+ "log_entries_at_start": 739,
  "status": "complete",
- "finished": "2026-10-25T10:59:47+0000",
+ "finished": "2026-10-25T11:00:48+0000",
  "served": {
   "qwen25-7b": {
    "provider": "Phala",
    "model": "qwen/qwen-2.5-7b-instruct"
   }
  },
- "cost_this_session_usd": 0.028669,
- "network_calls_this_session": 362,
- "log_hits_this_session": 377,
+ "cost_this_session_usd": 0.029631,
+ "network_calls_this_session": 373,
+ "log_hits_this_session": 437,
  "concurrency": {
   "phala": {
    "final_limit": 69,
@@ -72,9 +72,9 @@
    "halvings_on_429": 0
   }
  },
- "log_entries": 739,
- "unique_keys": 739,
+ "log_entries": 1112,
+ "unique_keys": 1112,
  "duplicate_calls": 0,
- "cost_total_usd": 0.041757,
+ "cost_total_usd": 0.045891,
  "decisions": 1210
 }

@@ -17,6 +17,11 @@ from flight_prefs.answer_parsing import parse_pick
         ("I would recommend Flight 3.", 2),
         ("Flight 1 looks cheap, but the best option is Flight 2.", 1),
         ("The best option is Flight 1.\n\nActually, the best option is Flight 3.", 2),
+        ("Based on the information provided, Flight 3 appears to be the best option.", 2),
+        ("Given your preference for Flight 1, the best option is indeed Flight 1", 0),
+        ("Based on your preferences, the best option appears to be Flight 1. It", 0),
+        ("The best option based on your preference for Flight 1 is Flight 3.", 2),
+        ("**Flight 2**", 1),
     ],
 )
 def test_parses(text: str, pick: int) -> None:
@@ -33,6 +38,10 @@ def test_parses(text: str, pick: int) -> None:
         "Let's break down the options:\n\n- **Flight 1**: Departure at 02:00 PM\n- **Flight 2**:",
         "Flight 4 is the best option.",
         "I need more information.",
+        "Given your preference for Flight 1, the best option based on your criteria is",
+        "Given your preference for Flight 1, the best option that aligns with your",
+        "Based on the preferences for a direct flight and a reasonable price, Flight 1",
+        "Given your preference for Flight 1, it seems you value a later departure time",
     ],
 )
 def test_refuses_to_guess(text: str | None) -> None:
