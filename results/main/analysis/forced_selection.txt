@@ -1,0 +1,39 @@
+Held-out accuracy (%) on items where the thinking arm was / wasn't forced (same user, checkpoint, menu)
+
+arm                      gemma4-31b-think  gemma4-31b  qwen25-7b  bayes  copy_last  random
+checkpoint think_forced                                                                   
+0          False                     38.1        37.6       37.3   33.5       34.0    34.2
+           True                      35.5        34.0       34.0   34.3       36.0    32.2
+1          False                     55.1        52.5       42.9   58.8       49.8    32.8
+           True                      40.6        37.4       30.9   53.4       42.4    33.6
+2          False                     65.1        63.8       49.4   69.9       54.5    32.2
+           True                      50.0        46.0       33.0   67.7       44.4    33.2
+3          False                     69.7        67.4       48.3   76.5       52.9    35.5
+           True                      54.2        50.9       35.7   74.2       47.1    34.5
+4          False                     76.9        75.7       47.8   81.1       50.6    33.4
+           True                      58.2        53.7       34.0   76.7       46.4    31.6
+5          False                     79.2        79.2       42.1   81.4       66.7    33.0
+           True                      61.6        58.0       37.7   80.5       50.0    33.3
+
+forced share by checkpoint (%): {0: 19.0, 1: 49.6, 2: 65.7, 3: 69.3, 4: 84.1, 5: 93.6}
+
+Gap = unforced − forced accuracy within checkpoint (1–5), mean over users [95% CI] (pts)
+  gemma4-31b-think    +9.2 [ +4.2, +14.1]   (users: 50)
+  gemma4-31b         +11.1 [ +6.6, +15.6]   (users: 50)
+  qwen25-7b           +9.9 [ +5.9, +13.9]   (users: 50)
+  bayes               +2.6 [ -2.9,  +7.8]   (users: 50)
+  copy_last           +6.6 [ +3.1, +10.4]   (users: 50)
+  random              +1.5 [ -2.2,  +5.5]   (users: 50)
+
+Difference-in-differences: thinking's gap − another arm's gap (positive = forcing hurts thinking beyond what item difficulty explains)
+  thinking − gemma4-31b    -1.9 [ -5.2,  +1.5]
+  thinking − qwen25-7b     -0.8 [ -5.5,  +4.2]
+  thinking − bayes         +6.6 [ +2.6, +10.2]
+  thinking − copy_last     +2.6 [ -3.4,  +7.9]
+  thinking − random        +7.7 [ +0.4, +14.4]
+
+Thinking vs no-thinking on the same items, pooled checkpoints 0–5 (%):
+arm           gemma4-31b  gemma4-31b-think
+think_forced                              
+False               53.3              54.7
+True                49.8              53.5
