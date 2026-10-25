@@ -2,3 +2,7 @@ warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be remo
 run main: 400 dialogues, 3 LLM arms, 4275 logged calls to reuse
 [    61s] dialogues 256/400 · network 41351 · log hits 24706 · $0.0662 · limit/in-flight phala:69/69 429s=0 friendli:68/68 429s=0
 [   121s] dialogues 256/400 · network 51041 · log hits 24706 · $0.1197 · limit/in-flight phala:71/71 429s=0 friendli:70/70 429s=0
+[   182s] dialogues 256/400 · network 55685 · log hits 24706 · $0.1854 · limit/in-flight phala:74/74 429s=0 friendli:72/72 429s=0
+push: exit 0 
+[   244s] dialogues 256/400 · network 57383 · log hits 24706 · $0.2696 · limit/in-flight phala:77/72 429s=0 friendli:75/72 429s=0
+[   305s] dialogues 256/400 · network 57863 · log hits 24706 · $0.3465 · limit/in-flight phala:80/79 429s=0 friendli:77/77 429s=0
