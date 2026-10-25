@@ -1,0 +1,8 @@
+exec(open("load.py").read())
+W=pd.read_parquet("welfare.parquet"); th=pd.read_parquet("users.parquet").set_index("uid")
+W["grp"]=W.user_id.map(th.contra).clip(upper=2).map({0:"conventional",1:"1 contrarian attr",2:"2–3 contrarian"})
+print("share of achievable welfare (%), cp0 → cp5, by user type:")
+print((W[W.arm.isin(LLM+["bayes"])&W.checkpoint.isin([0,1,3,5])].pivot_table(index=["grp","arm"],columns="checkpoint",values="welfare")*100).round(1))
+f=held[(held.arm=="gemma4-31b-think")&(held.checkpoint>=1)].copy(); f["grp"]=f.user_id.map(th.contra).clip(upper=2)
+print("\nforced share (thinking cut off) by user type and cp (%):")
+print((f.pivot_table(index="grp",columns="checkpoint",values="forced")*100).round(0))

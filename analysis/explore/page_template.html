@@ -1,0 +1,541 @@
+<title>Whose Preferences Fill the Gaps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky claim index on the left (top bar on phones), one long evidence column; each claim = chart + for/against + raw traces. */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --ink:#14202b; --ink-2:#4a5866; --ink-3:#7a8794; --rule:#dfe4e8; --tint:#eef2f4;
+  --accent:#14202b; --good:#1d7a4f; --warn:#a15c00; --bad:#b3322b;
+  --s-bayes:#2a78d6; --s-qwen:#eb6834; --s-gemma:#1baf7a; --s-think:#6250d6; --s-ref:#8a949e;
+  --display:"Archivo Narrow","Arial Narrow",Arial,sans-serif; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11161b; --surface:#182027; --ink:#e7ecef; --ink-2:#aab6c0; --ink-3:#7f8c97; --rule:#2a343d; --tint:#1d262e;
+  --accent:#e7ecef; --good:#4fbf8a; --warn:#e0a24a; --bad:#ef7b72;
+  --s-bayes:#3987e5; --s-qwen:#d95926; --s-gemma:#199e70; --s-think:#9085e9; --s-ref:#7f8c97; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161b; --surface:#182027; --ink:#e7ecef; --ink-2:#aab6c0; --ink-3:#7f8c97; --rule:#2a343d; --tint:#1d262e;
+  --accent:#e7ecef; --good:#4fbf8a; --warn:#e0a24a; --bad:#ef7b72;
+  --s-bayes:#3987e5; --s-qwen:#d95926; --s-gemma:#199e70; --s-think:#9085e9; --s-ref:#7f8c97; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
+a{color:inherit}
+.wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;max-width:1240px;margin:0 auto;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+nav.index{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;max-height:calc(100vh - 40px);overflow:auto;font-size:13px}
+nav.index .eyebrow{margin-bottom:10px}
+nav.index ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+nav.index a{display:grid;grid-template-columns:22px 1fr;gap:6px;text-decoration:none;color:var(--ink-2);padding:6px 8px;border-radius:6px;line-height:1.35}
+nav.index a:hover,nav.index a:focus-visible{background:var(--tint);color:var(--ink)}
+nav.index a.on{background:var(--tint);color:var(--ink);font-weight:600}
+nav.index .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);padding-top:2px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+main{min-width:0}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1.02;letter-spacing:-.01em;margin:6px 0 14px;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(25px,3.2vw,32px);line-height:1.1;margin:0 0 10px;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 6px;letter-spacing:.005em}
+p{margin:0 0 12px;max-width:70ch}
+.lede{font-size:17px;color:var(--ink-2);max-width:68ch}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px 18px;margin:16px 0 8px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.meta-row b{color:var(--ink);font-weight:500}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2);margin:10px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:3px;border-radius:2px;display:inline-block}
+.sw.dash{background:repeating-linear-gradient(90deg,var(--c) 0 5px,transparent 5px 8px)!important}
+/* landing claim list */
+.claims{display:grid;gap:10px;margin:22px 0 8px;padding:0;list-style:none}
+.claims li{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:4px 14px;align-items:start;padding:14px 16px;background:var(--surface);border:1px solid var(--rule);border-radius:10px}
+.claims .n{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding-top:3px}
+.claims .t{font-weight:600}
+.claims .t a{text-decoration:none}
+.claims .t a:hover{text-decoration:underline}
+.claims .obj{grid-column:2/4;font-size:13.5px;color:var(--ink-2)}
+.claims .obj::before{content:"Strongest objection · ";font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.chip.hi{color:var(--good)} .chip.md{color:var(--warn)} .chip.lo{color:var(--bad)}
+/* claim sections */
+section.claim{padding-top:46px;margin-top:40px;border-top:1px solid var(--rule)}
+.claim-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:6px}
+.statement{font-size:18px;font-weight:500;max-width:68ch;margin:6px 0 14px;text-wrap:pretty}
+.pm{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:14px 0 18px}
+.pm div{background:var(--tint);border-radius:8px;padding:12px 14px;font-size:14px}
+.pm b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500;margin-bottom:4px}
+figure{margin:18px 0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px 16px 12px}
+figure .cap{font-size:13.5px;color:var(--ink-2);margin:8px 0 0;max-width:none}
+figure .ftitle{font-weight:600;font-size:14.5px;margin-bottom:2px}
+figure .fsub{font-size:12.5px;color:var(--ink-3);margin-bottom:8px;font-family:var(--mono)}
+.chart{position:relative;height:280px}
+.chart.tall{height:320px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px}
+.grid2 figure,.grid3 figure{margin:0}
+.chart.small{height:200px}
+.fa{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:18px 0}
+.fa > div{border-radius:10px;padding:14px 16px;border:1px solid var(--rule);background:var(--surface)}
+.fa h4{margin:0 0 8px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+.fa .for h4{color:var(--good)} .fa .against h4{color:var(--bad)}
+.fa ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.num{font-family:var(--mono);font-size:.92em;border-bottom:1px dotted var(--ink-3);cursor:help;font-variant-numeric:tabular-nums;position:relative;white-space:nowrap}
+.num:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.tip{position:fixed;z-index:50;max-width:320px;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:11.5px;line-height:1.45;padding:8px 10px;border-radius:6px;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+details.raw{margin:12px 0;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
+details.raw summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+details.raw summary::-webkit-details-marker{display:none}
+details.raw summary::after{content:"+";font-family:var(--mono);color:var(--ink-3)}
+details.raw[open] summary::after{content:"–"}
+details.raw .body{padding:0 16px 14px;display:flex;flex-direction:column;gap:12px}
+.trace{border-left:3px solid var(--s-think);background:var(--tint);border-radius:0 8px 8px 0;padding:10px 12px;min-width:0}
+.trace.qwen{border-left-color:var(--s-qwen)}
+.trace pre{margin:6px 0 0;font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.prov{font-family:var(--mono);font-size:11px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:4px 12px}
+.trace .why{font-size:13px;color:var(--ink-2);margin-top:4px}
+table.t{border-collapse:collapse;font-size:13px;width:100%;font-variant-numeric:tabular-nums}
+table.t th,table.t td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t th{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.tscroll{overflow-x:auto}
+.vig{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.vcard{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px}
+.vtop{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px}
+.theta{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.theta span{font-family:var(--mono);font-size:11.5px;padding:3px 7px;border-radius:5px;background:var(--tint)}
+.rounds{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.rnd{display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;font-size:13px}
+.rnd .lab{font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.rnd .lab .ok{color:var(--good);font-weight:600} .rnd .lab .no{color:var(--bad);font-weight:600}
+.rnd .q{font-family:var(--mono);font-size:11.5px;color:var(--ink);background:var(--tint);border-radius:6px;padding:6px 8px;white-space:pre-wrap;word-break:break-word}
+.held{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
+.held > div{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;font-size:14px}
+.held b{font-weight:600}
+.callout{background:var(--tint);border-radius:10px;padding:14px 16px;font-size:14.5px;margin:16px 0}
+.foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-2)}
+@media (max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:16px}
+  nav.index{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;max-height:none;background:var(--bg);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:8px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--rule)}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+  nav.index .eyebrow{display:none}
+  nav.index ol{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  nav.index a{grid-template-columns:auto auto;white-space:nowrap;padding:6px 10px}
+  nav.index .lbl{display:none}
+  nav.index a .short{display:inline}
+  .vtop{grid-template-columns:minmax(0,1fr)}
+  .claims li{grid-template-columns:28px minmax(0,1fr)}
+  .claims .chip{grid-column:2}
+  .claims .obj{grid-column:2}
+}
+nav.index .short{display:none}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<nav class="index" aria-label="Claims">
+  <div class="eyebrow">Slices</div>
+  <ol id="navlist"></ol>
+</nav>
+<main>
+  <header>
+    <div class="eyebrow">Spike 2 · data mining on the main run · Qiu et al. (2026) flight task</div>
+    <h1>Whose preferences fill the gaps?</h1>
+    <p class="lede">Fifty simulated travellers with hidden preferences, five rounds of feedback, three language models and an exact Bayesian benchmark. This page slices the 242,000 logged decisions and about 25,000 thinking traces along the axes where something showed up. Each slice states one pattern, says how sure I am, puts the evidence against it next to the evidence for it, and lets you open the raw traces.</p>
+    <div class="meta-row">
+      <span><b>50</b> users × <b>605</b> decisions per arm</span>
+      <span>Arms: <b>Qwen 2.5 7B</b>, <b>Gemma 4 31B</b>, <b>Gemma 4 31B thinking</b> (1,024-token cap), <b>Bayes</b></span>
+      <span>CIs: 95%, resampling users</span>
+      <span>Hover or tab to any <span class="num" tabindex="0" data-src="Example: every dotted number names the script and sample it came from.">dotted number</span> for its source</span>
+    </div>
+    <div class="legend" id="legend-main"></div>
+    <div class="callout"><b>How to read “contrarian”.</b> All three models start from the same default traveller: cheaper, shorter, fewer stops (slice 1). I call a user <i>contrarian</i> on an attribute when they want the opposite of that default (pricier, longer, or more stops). Users split 14 / 18 / 18 into 0, 1, and 2–3 contrarian attributes. “Welfare” is the share of achievable utility delivered: 100% always picks the user’s best flight, 0% always picks the worst, random picking gives about 50%.</div>
+    <ol class="claims" id="claimlist"></ol>
+  </header>
+  <div id="sections"></div>
+  <div class="foot" id="foot"></div>
+</main>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const ARM = {
+  'gemma4-31b-think': {label: 'Gemma 4 31B · thinking', v: '--s-think'},
+  'gemma4-31b': {label: 'Gemma 4 31B', v: '--s-gemma'},
+  'qwen25-7b': {label: 'Qwen 2.5 7B', v: '--s-qwen'},
+  'bayes': {label: 'Bayesian Assistant', v: '--s-bayes'},
+  'convbayes': {label: 'Bayes with a conventional prior', v: '--s-bayes', dash: true},
+  'oracle': {label: 'The users themselves', v: '--s-ref'},
+};
+const LLM = ['gemma4-31b-think', 'gemma4-31b', 'qwen25-7b'];
+const ALL = [...LLM, 'bayes'];
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const col = a => css(ARM[a].v);
+const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
+const pm = x => (x > 0 ? '+' : '') + f1(x);
+const SRC = 'analysis/explore/';
+function N(text, src) { return `<span class="num" tabindex="0" data-src="${src.replace(/"/g, '&quot;')}">${text}</span>`; }
+function ciN(c, unit, src, dp) { const k = dp ?? 1; const r = v => (Math.round(v * 10 ** k) / 10 ** k).toFixed(k); return N(`${c[0] > 0 && unit === 'pts' ? '+' : ''}${r(c[0])}${unit === '%' ? '%' : unit === 'pts' ? ' pts' : ''} [${r(c[1])}, ${r(c[2])}]`, `${src} · n = ${c[3]} users · 95% CI by resampling users`); }
+function legendHTML(arms) { return arms.map(a => `<span><i class="sw${ARM[a].dash ? ' dash' : ''}" style="background:var(${ARM[a].v});--c:var(${ARM[a].v})"></i>${ARM[a].label}</span>`).join(''); }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+const THETA = ['dep', 'dur', 'stops', 'price'];
+function thetaHTML(t) { const nm = ['departure', 'duration', 'stops', 'price']; return t.map((v, i) => `<span>${nm[i]} ${v > 0 ? '+' : ''}${v}</span>`).join(''); }
+function trace(ex, why, cls) {
+  if (!ex) return '';
+  return `<div class="trace ${cls || ''}"><div class="prov"><span>user ${ex.user}</span><span>${ex.where || ''}</span><span>checkpoint ${ex.checkpoint}</span><span>call ${ex.key}</span><span>θ (dep, dur, stops, price) = [${ex.theta.join(', ')}]</span>${ex.finish === 'length' ? '<span>cut off at cap</span>' : ''}</div>${why ? `<div class="why">${why}</div>` : ''}<pre>${esc(ex.text)}</pre></div>`;
+}
+
+const SECTIONS = [];
+function claim(o) { SECTIONS.push(o); }
+
+/* ---------- 1. Default ---------- */
+claim({
+  id: 'default', short: 'Default', nav: 'The default traveller',
+  title: 'With no information, every model serves the same default traveller',
+  conf: ['hi', 'Pattern: strong'],
+  objection: 'Only 3 of 50 users are contrarian on all three attributes, so the far right of the chart rests on few people.',
+  statement: () => `Before any feedback, all three models pick like someone who wants a cheap, short, direct flight. They are right ${N(f1(D.acc0_by_contra['gemma4-31b-think'][0]) + '%', 'round-0 held-out accuracy, thinking Gemma, 14 users with 0 contrarian attributes · implied.py / export.py')} of the time for users who share that taste and ${N(f1(D.acc0_by_contra['gemma4-31b-think'][3]) + '%', 'same, 3 users contrarian on duration, stops and price')} for users who want the opposite on all three. Bayes, with a uniform prior, sits near a third for everyone.`,
+  pm: ['Strong. The round-0 picks of all three models agree 69–84% with each other, and accuracy falls steeply with distance from the default.', 'The thinking traces say it outright. At round 0, 60% appeal to what a typical traveller or most people want, and 36% frame the task as a puzzle or test.'],
+  body: () => `
+  <div class="grid2">
+    <figure><div class="ftitle">Round-0 accuracy by how contrarian the user is</div><div class="fsub">held-out accuracy, % · before any feedback</div><div class="chart"><canvas id="c-acc0"></canvas></div><div class="legend">${legendHTML(ALL)}</div><p class="cap">Users: ${D.n_by_contra.join(' / ')} with 0 / 1 / 2 / 3 contrarian attributes.</p></figure>
+    <figure><div class="ftitle">The default traveller, read off the round-0 picks</div><div class="fsub">conditional-logit weight per attribute (negative = prefers less of it)</div><div class="chart"><canvas id="c-defw"></canvas></div><div class="legend">${legendHTML(LLM)}</div><p class="cap">Fitted on each model’s 100 round-0 picks (identical for every user). Departure weight is small: the default barely cares when you fly.</p></figure>
+  </div>
+  <figure><div class="ftitle">What the reasoning appeals to, by round</div><div class="fsub">share of thinking traces, % · regex-coded</div><div class="chart small"><canvas id="c-frame"></canvas></div><p class="cap">Appeals to a typical traveller and framing as a puzzle or test both vanish once there is evidence to use.</p></figure>`,
+  for_: () => [
+    `Round-0 picks agree across models (Qwen–Gemma 69%, Gemma–thinking 84%) and are almost never Pareto-dominated (0–4%).`,
+    `Accuracy at round 0 tracks alignment with the model’s own default almost perfectly: correlation ${N('0.98', 'corr(cos(user θ, model default θ), round-0 accuracy), thinking Gemma · alignment.parquet')}.`,
+    `In ${N(f1(D.by_cp.typical[0]) + '%', 'regex “typical traveller / most people / commonly people …”, round-0 thinking traces · export2.py')} of round-0 traces the model reasons from what a typical traveller wants.`,
+  ],
+  against: () => [
+    `The default is inferred from 100 menus with ties. The logit weights have no CIs because the round-0 picks are shared by all users.`,
+    `Bayes is at chance at round 0 by construction (uniform prior, random tie-break). It is a benchmark for learning, not for priors.`,
+    `“Typical traveller” is a keyword count with no human validation; some hits are the model weighing what a typical user would want rather than adopting it.`,
+  ],
+  raw: () => [
+    trace(D.excerpts.objectively, 'Round 1 for user 378, who in fact prefers expensive flights. The model calls the cheapest option objectively best.'),
+    trace(D.excerpts.typical, 'Round 1 for user 23. With no history the model falls back on what people commonly prefer.'),
+  ].join(''),
+  draw: () => {
+    bar('c-acc0', ['0', '1', '2', '3'].map(x => x + ' contrarian'), ALL.map(a => ({a, data: D.acc0_by_contra[a]})), {max: 80, unit: '%'});
+    bar('c-defw', ['departure', 'duration', 'stops', 'price'], LLM.map(a => ({a, data: D.default_w[a]})), {min: -1.8, max: 0.4});
+    line('c-frame', [0, 1, 2, 3, 4, 5], [
+      {label: 'Appeals to a typical traveller', data: D.by_cp.typical, color: css('--s-think')},
+      {label: 'Frames it as a puzzle or test', data: D.by_cp.test, color: css('--s-ref'), dash: true},
+    ], {max: 70, unit: '%', legend: true});
+  },
+});
+
+/* ---------- 2. Updating ---------- */
+claim({
+  id: 'updating', short: 'Updating', nav: 'Same start, slower learning',
+  title: 'The gap to Bayes is in the updating, not the starting point',
+  conf: ['hi', 'Pattern: strong · mechanism: moderate'],
+  objection: 'The conventional prior was tuned (strength 3) to match Gemma’s start, so the matched comparison is constructed, not independent.',
+  statement: () => `A Bayesian given the same conventional prior starts where thinking Gemma starts (within ${N('0–4 pts', 'convbayes − thinking at round 0, by user type · export.py')}) and ends ${ciN(D.convbayes_minus_think['0']['5'], 'pts', 'conventional-prior Bayes − thinking Gemma, round 5, conventional users')} ahead for conventional users and ${ciN(D.convbayes_minus_think['2']['5'], 'pts', 'same, users contrarian on 2–3 attributes')} ahead for contrarian ones. For conventional users Gemma barely learns at all: its gains are cancelled by losses.`,
+  pm: ['Gemma’s gain depends on the user’s type, Bayes’s does not. Thinking gains +7 points for conventional users and +38 for strongly contrarian ones; Bayes +46 and +47.', 'Moderate evidence. For conventional users, Gemma moves as many held-out picks from right to wrong (7.8–8.1% per round) as from wrong to right (8.8–9.7%). Bayes keeps losses at 4.5%. A simple model with the conventional prior, exact updating and noisy choices reproduces Gemma’s curves within 3.4 points RMSE.'],
+  body: () => `
+  <div class="grid3">${['0', '1', '2'].map(g => `<figure><div class="ftitle">${{'0': 'Conventional users', '1': '1 contrarian attribute', '2': '2–3 contrarian attributes'}[g]}</div><div class="fsub">held-out accuracy, % · n = ${D.n_by_type[g]} users</div><div class="chart small"><canvas id="c-type-${g}"></canvas></div></figure>`).join('')}</div>
+  <div class="legend">${legendHTML([...ALL, 'convbayes'])}</div>
+  <div class="grid2" style="margin-top:14px">
+    <figure><div class="ftitle">Net learning per round, rounds 2–5</div><div class="fsub">wrong→right minus right→wrong, % of held-out items · 95% CI</div><div class="chart small"><canvas id="c-net"></canvas></div><div class="legend">${legendHTML(ALL)}</div></figure>
+    <figure><div class="ftitle">How the curves sort users</div><div class="fsub">number of users per archetype</div><div class="tscroll"><table class="t" id="t-arch"></table></div><p class="cap">“Starts right, stays put” = round-0 accuracy ≥ 50% and gains under 10 points. All 9 such thinking-Gemma users are conventional.</p></figure>
+  </div>`,
+  for_: () => [
+    `Gain from round 0 to 5, thinking Gemma: conventional ${ciN(D.gain_by_type['gemma4-31b-think'].conventional, 'pts', 'robust.py / export.py')}, contrarian ${ciN(D.gain_by_type['gemma4-31b-think'].contrarian, 'pts', 'robust.py / export.py')}. Bayes: ${ciN(D.gain_by_type.bayes.conventional, 'pts', 'export.py')} vs ${ciN(D.gain_by_type.bayes.contrarian, 'pts', 'export.py')}.`,
+    `Net learning per round for conventional users: thinking ${ciN(D.net_learning['gemma4-31b-think'].conventional, 'pts', 'export.py')}, no thinking ${ciN(D.net_learning['gemma4-31b'].conventional, 'pts', 'export.py')}, Bayes ${ciN(D.net_learning.bayes.conventional, 'pts', 'export.py')}.`,
+    `How much accuracy depends on alignment with the model’s default falls from 0.98 to 0.36 for thinking Gemma, but stays at 0.81 for Qwen (see the attributes slice).`,
+  ],
+  against: () => [
+    `The matched-prior Bayesian is my construction. Its prior strength (3) was chosen to reproduce Gemma’s round-0 accuracy.`,
+    `The imperfect-Bayes fit has a trade-off: a weaker prior with under-reaction to evidence fits almost as well (5.0 vs 3.4 RMSE). So “noisy choice” and “under-weighting evidence” are not cleanly separated.`,
+    `Conventional users start at about 60%, so part of their small gain is less headroom. Bayes still gains 46 points on the same users, so headroom alone does not explain it.`,
+  ],
+  raw: () => trace(D.excerpts.priority_156, 'User 156 weighs all four attributes equally. Gemma gets all five live rounds right, yet its held-out accuracy falls from 79% to 72%: confirmations push it toward a strict ranking with stops first.'),
+  draw: () => {
+    ['0', '1', '2'].forEach(g => line('c-type-' + g, [0, 1, 2, 3, 4, 5], [...ALL, 'convbayes'].map(a => ({a, data: D.acc_by_type[g][a]})), {min: 0, max: 100, unit: '%'}));
+    const groups = ['conventional', 'one', 'contrarian'];
+    errbar('c-net', ['conventional', '1 contrarian', '2–3 contrarian'], ALL.map(a => ({a, cis: groups.map(g => D.net_learning[a][g])})), {min: -1, max: 10});
+    const cats = ['starts right, stays put', 'starts wrong, learns', 'still failing at round 5', 'other'];
+    document.getElementById('t-arch').innerHTML = `<thead><tr><th>arm</th>${cats.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${ALL.map(a => `<tr><td>${ARM[a].label}</td>${cats.map(c => `<td>${D.archetypes[a][c] || 0}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  },
+});
+
+/* ---------- 3. Welfare ---------- */
+claim({
+  id: 'welfare', short: 'Welfare', nav: 'Delegation loss',
+  title: 'Five rounds with Gemma are worth about 1.6 rounds with Bayes',
+  conf: ['hi', 'Pattern: strong'],
+  objection: 'Welfare is in θᵀφ units on a 0–1 scale per menu; it has no money interpretation, and the exchange rate depends on Bayes’s uniform prior.',
+  statement: () => `Measured as the share of achievable welfare, thinking Gemma after five rounds of feedback delivers what Bayes delivers after ${N(D.exchange['gemma4-31b-think'][0].toFixed(1) + ' rounds [' + D.exchange['gemma4-31b-think'][1].toFixed(1) + ', ' + D.exchange['gemma4-31b-think'][2].toFixed(1) + ']', 'interpolated on the mean welfare curves; 95% CI by resampling users · export.py')}. Qwen’s five rounds are worth ${N(D.exchange['qwen25-7b'][0].toFixed(1) + ' rounds', 'same method')}. For conventional users the model with zero information beats Bayes after one round; for contrarian users it starts at a third.`,
+  pm: ['The default helps typical principals at the start and costs atypical ones throughout.', 'Delegation reading: where the principal says nothing about an attribute, the agent fills in its own preference (see the panel on price-indifferent users).'],
+  body: () => `
+  <div class="grid3">${['0', '1', '2'].map(g => `<figure><div class="ftitle">${{'0': 'Conventional users', '1': '1 contrarian attribute', '2': '2–3 contrarian attributes'}[g]}</div><div class="fsub">share of achievable welfare, %</div><div class="chart small"><canvas id="c-w-${g}"></canvas></div></figure>`).join('')}</div>
+  <div class="legend">${legendHTML(ALL)}</div>
+  <div class="grid2" style="margin-top:14px">
+    <figure><div class="ftitle">Per-user welfare at round 5</div><div class="fsub">each dot = one user, %</div><div class="chart"><canvas id="c-wusers"></canvas></div><p class="cap">Bayes serves every user at ≥ ${f1(D.welfare_tail.bayes.min)}%. Thinking Gemma leaves ${D.welfare_tail['gemma4-31b-think'].below70} of 50 below 70%; Qwen ${D.welfare_tail['qwen25-7b'].below70}.</p></figure>
+    <figure><div class="ftitle">Silence filled with the agent’s taste</div><div class="fsub">revealed price weight for the 11 users who do not care about price</div><div class="chart"><canvas id="c-fill"></canvas></div><div class="legend">${legendHTML(['gemma4-31b-think', 'gemma4-31b', 'qwen25-7b', 'bayes', 'oracle'])}</div></figure>
+  </div>`,
+  for_: () => [
+    `Round-5 welfare: Bayes ${N(f1(D.welfare_overall.bayes[5]) + '%', 'welfare.py')}, thinking ${N(f1(D.welfare_overall['gemma4-31b-think'][5]) + '%', 'welfare.py')}, Gemma ${N(f1(D.welfare_overall['gemma4-31b'][5]) + '%', 'welfare.py')}, copy-last ${N(f1(D.welfare_overall.copy_last[5]) + '%', 'welfare.py')}, Qwen ${N(f1(D.welfare_overall['qwen25-7b'][5]) + '%', 'welfare.py')}, random ${N(f1(D.welfare_overall.random[5]) + '%', 'welfare.py')}.`,
+    `Price-indifferent users get a price weight of ${N(f1(D.price_fill['gemma4-31b-think'][5]), 'conditional logit on round-5 picks · clogit_traj.py')} from thinking Gemma vs ${N(f1(D.price_fill.bayes[5]), 'same, Bayes')} from Bayes; difference ${ciN(D.price_fill_ci['gemma4-31b-think'], '', 'thinking − Bayes, revealed price weight', 2)}. It persists from round 1 to round 5.`,
+  ],
+  against: () => [
+    `A Bayesian with the same conventional prior also gives price-indifferent users a negative price weight (−0.47): when the evidence is silent, any prior persists. The fill-in is rational given the agent’s prior; the question is whose prior it is.`,
+    `Only 11 users are price-indifferent; the CI is wide.`,
+    `I first claimed thinking mainly helps the worst-served users. That was regression to the mean and does not hold when users are split by type (+3.0, +1.5, +3.4 points).`,
+  ],
+  raw: () => trace(D.excerpts.luxury, 'A contrarian possibility is weighed and dismissed on priors.'),
+  draw: () => {
+    ['0', '1', '2'].forEach(g => line('c-w-' + g, [0, 1, 2, 3, 4, 5], ALL.map(a => ({a, data: D.welfare_by_type[g][a]})), {min: 20, max: 100, unit: '%'}));
+    strip('c-wusers', ALL, a => D.welfare_users[a]);
+    line('c-fill', [0, 1, 2, 3, 4, 5], ['gemma4-31b-think', 'gemma4-31b', 'qwen25-7b', 'bayes', 'oracle'].map(a => ({a, data: D.price_fill[a]})), {min: -1.6, max: 0.8, zero: true});
+  },
+});
+
+/* ---------- 4. Attributes ---------- */
+claim({
+  id: 'attributes', short: 'Attributes', nav: 'What gets learned',
+  title: 'Departure time is ignored; liking expensive flights is the hardest thing to learn',
+  conf: ['md', 'Pattern: moderate'],
+  objection: 'A cruder measure (best-fitting θ on the 624-point grid) gave 17% instead of 61% for price; the attribute results depend on how revealed preference is measured.',
+  statement: () => `Fitting a choice model to each user’s round-5 picks: Gemma puts a weight of ${N(D.abs_w['gemma4-31b-think'][0].toFixed(2), 'mean |conditional-logit weight| on departure, round 5 · clogit_traj.py')} on departure time against ${N(D.abs_w.oracle[0].toFixed(2), 'same fit on the users’ own choices')} for the users themselves, and gets its direction right for ${ciN(D.dir_ci['gemma4-31b-think'].departure, '%', 'sign of logit weight = sign of true θ, users who care about departure')} of users (Bayes ${ciN(D.dir_ci.bayes.departure, '%', 'same, Bayes')}). For users who like pricier flights, the price direction is right for ${ciN(D.dir_ci['gemma4-31b-think'].price_pricier, '%', 'users with θ_price > 0')}; Qwen ${ciN(D.dir_ci['qwen25-7b'].price_pricier, '%', 'same, Qwen')}.`,
+  pm: ['Departure is neglected, not learned backwards. Its weight is a third of the other attributes’ and its direction is near chance. Contrarian price is learned for 61% of users and stalls there; contrarian duration (88%) and stops (83%) are learned much better.', 'Weak evidence. Departure is not affected by the conventional prior; a Bayesian with that prior learns it 90% of the time. Traces treat time of day as a category (“morning”, “red-eye”) rather than a scale. A departure direction is stated in only 18% of live-round traces, and stated beliefs about it move picks weakly.'],
+  body: () => `
+  <div class="grid2">
+    <figure><div class="ftitle">Revealed sensitivity to each attribute, round 5</div><div class="fsub">mean |conditional-logit weight| across users</div><div class="chart"><canvas id="c-absw"></canvas></div><div class="legend">${legendHTML([...ALL, 'oracle'])}</div></figure>
+    <figure><div class="ftitle">Learning the contrarian direction, by round</div><div class="fsub">% of users whose revealed weight has the right sign</div><div class="chart"><canvas id="c-dir"></canvas></div><div class="legend"><span><i class="sw" style="background:var(--s-think)"></i>thinking: pricier lovers</span><span><i class="sw dash" style="--c:var(--s-think)"></i>thinking: departure (late lovers)</span><span><i class="sw" style="background:var(--s-bayes)"></i>Bayes: pricier lovers</span><span><i class="sw dash" style="--c:var(--s-bayes)"></i>Bayes: departure (late lovers)</span></div></figure>
+  </div>`,
+  for_: () => [
+    `The departure result agrees across both measures (grid fit and logit) and across no-thinking and thinking Gemma.`,
+    `Wrong picks lose the most utility on departure (0.19 per wrong pick for thinking Gemma vs 0.12 for random picking).`,
+    `When a trace states “prefers pricier”, the pick is the priciest flight 73% of the time vs 30% otherwise; for “prefers early” the link is weaker (53% vs 39%).`,
+  ],
+  against: () => [
+    `The departure scale is linear in clock time (6 AM → 10 PM). If the models treat time of day non-linearly, a linear fit understates what they learned. The traces suggest they do think categorically.`,
+    `18 users like pricier flights; the 61% has a CI of 39–83%.`,
+    `Grid-based recovery (17% for contrarian price) was too harsh: averaging tied best-fitting θ often lands exactly on zero.`,
+  ],
+  raw: () => trace(D.excerpts.why_f1, 'User 378 likes expensive flights. Round 4: the model notices the anomaly (“Why F1?”) and explains it away with stops and duration.') + trace(D.excerpts.tally, 'User 19 (likes pricier flights): when the model does get it, it is by tallying one attribute across all rounds.'),
+  draw: () => {
+    bar('c-absw', ['departure', 'duration', 'stops', 'price'], [...ALL, 'oracle'].map(a => ({a, data: D.abs_w[a]})), {min: 0, max: 1.6});
+    const x = [1, 2, 3, 4, 5];
+    line('c-dir', x, [
+      {label: 'thinking: pricier lovers', data: D.dir_curves['gemma4-31b-think'].price_pricier.slice(1), color: css('--s-think')},
+      {label: 'thinking: departure (late lovers)', data: D.dir_curves['gemma4-31b-think'].departure_late.slice(1), color: css('--s-think'), dash: true},
+      {label: 'Bayes: pricier lovers', data: D.dir_curves.bayes.price_pricier.slice(1), color: css('--s-bayes')},
+      {label: 'Bayes: departure (late lovers)', data: D.dir_curves.bayes.departure_late.slice(1), color: css('--s-bayes'), dash: true},
+    ], {min: 0, max: 100, unit: '%', xlab: 'round'});
+  },
+});
+
+/* ---------- 5. Surface ---------- */
+claim({
+  id: 'surface', short: 'Surface cues', nav: 'Echoing the flight number',
+  title: 'After “I prefer Flight N”, the models pick position N on unrelated menus',
+  conf: ['hi', 'Pattern: strong'],
+  objection: 'The echo is measured on held-out menus whose correct position is random, so it costs accuracy only to the extent it displaces a better pick.',
+  statement: () => `When the user says “Your option … is incorrect. I prefer Flight 2”, Qwen picks Flight 2 on the next, unrelated menus ${N(f1(D.echo['qwen25-7b'].after_incorrect) + '%', 'held-out picks at the next checkpoint in the position the user just named · export.py')} of the time. Gemma does so ${N(f1(D.echo['gemma4-31b'].after_incorrect) + '%', 'same')} and thinking Gemma ${N(f1(D.echo['gemma4-31b-think'].after_incorrect) + '%', 'same')}, against a base rate of ${N(f1(D.echo_base) + '%', 'share of users’ own held-out choices in that position')}. Thinking roughly halves the effect.`,
+  pm: ['Strong: per-user paired differences have tight CIs for all three models.', 'For Qwen, observed: it reads the label as the preference. 28% of its first replies after an “incorrect” begin “Given your preference for Flight N”, and N is the named flight 99.8% of the time. For Gemma the echo is implicit; at most 0.2% of thinking traces state a position hypothesis.'],
+  body: () => `
+  <div class="grid2">
+    <figure><div class="ftitle">Picks in the position the user just named</div><div class="fsub">% of next-checkpoint held-out picks · dashed line = base rate</div><div class="chart"><canvas id="c-echo"></canvas></div></figure>
+    <figure><div class="ftitle">Penalty when the user’s best flight is listed third</div><div class="fsub">accuracy, 3rd minus 1st/2nd position, pts · 95% CI</div><div class="chart"><canvas id="c-pos"></canvas></div><div class="legend">${legendHTML(ALL)}</div></figure>
+  </div>`,
+  for_: () => [
+    `Echo after “incorrect” minus after “correct”, paired by user: Qwen ${ciN(D.echo['qwen25-7b'].paired_diff, 'pts', 'echo.py / export.py')}, Gemma ${ciN(D.echo['gemma4-31b'].paired_diff, 'pts', 'same')}, thinking ${ciN(D.echo['gemma4-31b-think'].paired_diff, 'pts', 'same')}, Bayes ${ciN(D.echo.bayes.paired_diff, 'pts', 'same')}.`,
+    `Echo picks are less accurate: Gemma ${N(f1(D.echo_acc['gemma4-31b'].echo) + '% vs ' + f1(D.echo_acc['gemma4-31b'].no_echo) + '%', 'after an incorrect, echo vs non-echo picks')}.`,
+    `Last-position penalty: Gemma ${ciN(D.pos_penalty['gemma4-31b'], 'pts', 'export.py')}, thinking ${ciN(D.pos_penalty['gemma4-31b-think'], 'pts', 'export.py')}, Bayes ${ciN(D.pos_penalty.bayes, 'pts', 'export.py')}.`,
+  ],
+  against: () => [
+    `Part of the echo may be rational copying of attributes: the named flight’s features predict the user’s next choices. The base rate (33.7% for Bayes’s picks) controls for this only on average.`,
+    `Explicit position hypotheses in thinking traces are rare (0.2%), so for Gemma the mechanism is inferred, not observed.`,
+  ],
+  raw: () => D.excerpts.qwen_echo.slice(0, 2).map(q => `<div class="trace qwen"><div class="prov"><span>Qwen 2.5 7B</span><span>user ${q.user}</span><span>checkpoint ${q.checkpoint}</span><span>call ${q.key}</span><span>first attempt, before the format reminder</span></div><pre>${esc(q.feedback)}\n→ ${esc(q.reply)}…</pre></div>`).join('') + trace(D.excerpts.flight3_pattern, 'One of the rare explicit cases: thinking Gemma considers the label itself as the pattern.'),
+  draw: () => {
+    groupedBar('c-echo', ALL.map(a => ARM[a].label), [
+      {label: 'after “correct”', data: ALL.map(a => D.echo[a].after_correct), color: css('--s-ref')},
+      {label: 'after “incorrect … I prefer Flight N”', data: ALL.map(a => D.echo[a].after_incorrect), colors: ALL.map(col)},
+    ], {min: 0, max: 100, unit: '%', base: D.echo_base});
+    errbar('c-pos', [''], ALL.map(a => ({a, cis: [D.pos_penalty[a]]})), {min: -10, max: 2, horizontalLabels: true});
+  },
+});
+
+/* ---------- 6. Reasoning ---------- */
+claim({
+  id: 'reasoning', short: 'Reasoning', nav: 'How the thinking goes',
+  title: 'Thinking Gemma ranks attributes instead of weighing them, and reads trade-offs as contradictions',
+  conf: ['md', 'Pattern: moderate · mechanism: suggestive'],
+  objection: 'The reasoning styles are coded with keyword patterns over about 25,000 traces, with no human-labelled validation set.',
+  statement: () => `${N(f1(D.style_share.lexicographic) + '%', 'regex for priority lists, “regardless of”, tie-breaks · export2.py')} of round-2+ traces rank attributes (“Priority 1: stops”); ${N(f1(D.style_share.compensatory) + '%', 'regex for scores, weights, totals, trade-offs')} weigh them with scores. The simulated users are linear trade-off makers, so a ranking rule eventually breaks, and the model then calls the user inconsistent (${N(f1(D.contra_claim_cp2plus) + '%', 'traces at round 2+ using contradict/inconsistent/conflict')} of traces; the users never are).`,
+  pm: ['Rule-style reasoning dominates; when a single-attribute rule fits the user, thinking Gemma does well (user 310, price only: 94% vs Bayes 67%).', 'Suggestive: (1) one correction becomes “Priority 1”; (2) the latest correction outweighs earlier ones; (3) the thinking budget goes on re-copying the history (47% of characters by round 5), so effort follows surprise rather than uncertainty.'],
+  body: () => `
+  <div class="grid2">
+    <figure><div class="ftitle">Where the thinking budget goes</div><div class="fsub">share of thinking characters restating flights, %, by round</div><div class="chart small"><canvas id="c-trans"></canvas></div></figure>
+    <figure><div class="ftitle">Thinking runs past the cap after being told it was wrong</div><div class="fsub">% of a user’s held-out traces cut off, by # of “incorrect” received so far</div><div class="chart small"><canvas id="c-cut"></canvas></div></figure>
+  </div>
+  <div class="grid2">
+    <figure><div class="ftitle">Which correction wins</div><div class="fsub">after two corrections pointing to different extremes: latest minus earlier, pts · 95% CI</div><div class="chart small"><canvas id="c-latest"></canvas></div><div class="legend">${legendHTML(ALL)}</div></figure>
+    <figure><div class="ftitle">Explicit hypothesis-forming fades</div><div class="fsub">“maybe the user …” statements per trace, by round</div><div class="chart small"><canvas id="c-hyp"></canvas></div></figure>
+  </div>`,
+  for_: () => [
+    `Latest minus earlier correction: thinking ${ciN(D.latest_minus_earlier['gemma4-31b-think'], 'pts', 'export2.py')}, Bayes ${ciN(D.latest_minus_earlier.bayes, 'pts', 'export2.py')}.`,
+    `Single corrections are absorbed like Bayes absorbs them: picks move toward the named flight’s extremes by +21 points for thinking (Bayes +22) and the shift persists a round later (58% vs 61%).`,
+    `Within a round, users whose picks were more often forced get less internally consistent picks (correlation −0.39 to −0.80).`,
+  ],
+  against: () => [
+    `Keyword coding counts what is written, not what drives the pick; stated beliefs predict picks only partly.`,
+    `The cut-off share rises with rounds for everyone, partly because the history grows; the within-round correlation with the number of “incorrect”s (0.38–0.61) controls for that only partly.`,
+    `“Contradiction” language is 10–14% of traces: a real but minor mode, not the typical trace.`,
+  ],
+  raw: () => trace(D.excerpts.one_shot, 'User 310 (price only). One correction and the rule is set: cheapest regardless. Here it is right.') + trace(D.excerpts.crucial, 'User 126 (cares about duration and stops equally). One correction becomes “Priority 1: stops”, and the model picks a 20-hour non-stop flight.') + trace(D.excerpts.contradiction, 'User 568 does not care about duration. Two choices that trade off are read as a contradiction, and departure time is searched for an explanation.') + trace(D.excerpts.unusual, 'User 77. Contrarian hypotheses are labelled unusual before they are tested.'),
+  draw: () => {
+    line('c-trans', [0, 1, 2, 3, 4, 5], [{label: 'restating flights', data: D.transcribe_by_cp, color: css('--s-think')}], {min: 0, max: 60, unit: '%'});
+    const cb = D.cut_by_incorrect.filter(r => r.n >= 5);
+    simpleBar('c-cut', cb.map(r => String(r.n_incorrect_so_far)), cb.map(r => r.cut), css('--s-think'), {min: 0, max: 100, unit: '%', xlab: '# “incorrect” so far'});
+    errbar('c-latest', [''], ALL.map(a => ({a, cis: [D.latest_minus_earlier[a]]})), {min: -14, max: 14, horizontalLabels: true});
+    line('c-hyp', [0, 1, 2, 3, 4, 5], [{label: 'hypotheses per trace', data: D.hyp_per_trace, color: css('--s-think')}], {min: 0, max: 2.5});
+  },
+});
+
+/* ---------- 7. Vignettes ---------- */
+claim({
+  id: 'vignettes', short: 'Four users', nav: 'Four users, round by round',
+  title: 'Four users, round by round',
+  conf: ['lo', 'Illustrations, not evidence'],
+  objection: 'Hand-picked cases. They show what the patterns look like inside one dialogue, not how often they occur.',
+  statement: () => `One contrarian user the model learns, one mixed user it never gets, one conventional user it gets right live but worse on new menus, and one single-attribute user where it beats Bayes. Lines show the thinking arm’s own words, in order.`,
+  pm: null,
+  body: () => `<div class="vig">${['343', '23', '156', '310'].map(u => vignette(u)).join('')}</div>`,
+  for_: null, against: null, raw: null,
+  draw: () => ['343', '23', '156', '310'].forEach(u => line('c-v-' + u, [0, 1, 2, 3, 4, 5], ALL.map(a => ({a, data: D.vignettes[u].curves[a]})), {min: 0, max: 100, unit: '%'})),
+});
+
+const VNOTE = {
+  '343': ['Likes pricier, longer, more stops', 'Learns: by round 3 it finds “always picks the most expensive flight”, then adds the other attributes.'],
+  '23': ['Early, short, more stops, slightly pricier', 'Never gets it: every round searches attribute by attribute for “a pattern” and finds none.'],
+  '156': ['Mildly conventional on everything', 'Right in all five live rounds, worse on new menus: confirmations harden into “Priority 1: stops”.'],
+  '310': ['Cares only about price (cheaper)', 'One correction and the rule is set; Bayes, with its uniform prior, takes longer.'],
+};
+function vignette(u) {
+  const v = D.vignettes[u];
+  return `<div class="vcard"><div class="vtop"><div><h3>User ${u} · ${VNOTE[u][0]}</h3><div class="theta">${thetaHTML(v.theta)}</div><p style="font-size:14px">${VNOTE[u][1]}</p></div><div><div class="chart small"><canvas id="c-v-${u}"></canvas></div><div class="legend">${legendHTML(ALL)}</div></div></div>
+  <div class="rounds">${v.rounds.map(r => `<div class="rnd"><div class="lab">Round ${r.round}<br>picked ${r.picked}, wanted ${r.wanted} <span class="${r.picked === r.wanted ? 'ok' : 'no'}">${r.picked === r.wanted ? '✓' : '✗'}</span>${r.forced ? '<br>cut off' : ''}<br><span style="color:var(--ink-3)">${r.key}</span></div><div class="q">${esc(r.lines.join('\n'))}</div></div>`).join('')}</div></div>`;
+}
+
+/* ---------- render ---------- */
+function confChip(c) { return `<span class="chip ${c[0]}">${c[1]}</span>`; }
+document.getElementById('legend-main').innerHTML = legendHTML([...ALL, 'convbayes']);
+document.getElementById('navlist').innerHTML = SECTIONS.map((s, i) => `<li><a href="#${s.id}" data-id="${s.id}"><span class="n">${String(i + 1).padStart(2, '0')}</span><span><span class="lbl">${s.nav}</span><span class="short">${s.short}</span></span></a></li>`).join('') + `<li><a href="#didnt" data-id="didnt"><span class="n">—</span><span><span class="lbl">What did not hold</span><span class="short">Didn’t hold</span></span></a></li>`;
+document.getElementById('claimlist').innerHTML = SECTIONS.map((s, i) => `<li><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t"><a href="#${s.id}">${s.title}</a></span>${confChip(s.conf)}<span class="obj">${s.objection}</span></li>`).join('');
+document.getElementById('sections').innerHTML = SECTIONS.map((s, i) => `
+<section class="claim" id="${s.id}">
+  <div class="claim-head"><span class="eyebrow">Slice ${String(i + 1).padStart(2, '0')}</span>${confChip(s.conf)}</div>
+  <h2>${s.title}</h2>
+  <p class="statement">${s.statement()}</p>
+  ${s.pm ? `<div class="pm"><div><b>Pattern</b>${s.pm[0]}</div><div><b>Proposed mechanism</b>${s.pm[1]}</div></div>` : ''}
+  ${s.body()}
+  ${s.for_ ? `<div class="fa"><div class="for"><h4>Evidence for</h4><ul>${s.for_().map(x => `<li>${x}</li>`).join('')}</ul></div><div class="against"><h4>Evidence against · limits</h4><ul>${s.against().map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
+  ${s.raw ? `<details class="raw"><summary>Raw thinking traces for this slice</summary><div class="body">${s.raw()}</div></details>` : ''}
+</section>`).join('') + `
+<section class="claim" id="didnt">
+  <div class="claim-head"><span class="eyebrow">Checked and dropped</span></div>
+  <h2>What did not hold</h2>
+  <div class="held">
+    <div><b>Thinking helps the worst-served users most.</b> It looked that way when users were split by no-thinking’s own score; split by user type the gain is flat (+3.0, +1.5, +3.4 welfare points). Regression to the mean.</div>
+    <div><b>Forced answers are worse because of the cut.</b> Every arm, Bayes aside, does equally badly on those items; thinking minus no-thinking on them is −1.9 points [−5.2, +1.5]. Forcing marks hard situations.</div>
+    <div><b>Gemma is more volatile than Bayes.</b> Round-to-round accuracy swings are similar (mean 7.6 vs 8.5 points; drops over 10 points 6% vs 4%). User 23 is an outlier.</div>
+    <div><b>Contrarian preferences get labelled odd.</b> “Unusual / weird” language is 10% vs 4% at round 1 and fades; too small to build on.</div>
+    <div><b>Preference strength (‖θ‖ strata).</b> No pattern in any arm.</div>
+    <div><b>Only 17% of pricier-lovers learned.</b> An artefact of the grid fit; the conditional logit gives 61%.</div>
+  </div>
+  <div class="callout" style="margin-top:20px"><b>Method notes.</b> Data: <code>results/main/decisions.parquet</code> and the call logs in <code>results/main/calls/</code> (branch <code>claude/peaceful-planck-1swzju</code>). All slicing scripts are in <code>analysis/explore/</code>; every dotted number names its script. “Revealed weights” are per-user conditional logits on 100 held-out picks (L2 0.05). Text measures are regular expressions over the 25,406 thinking traces of the capped thinking arm; forced follow-up answers have no thinking. CIs resample the 50 users. One menu seed, as in the plan; Friendli does not state Gemma’s quantisation.</div>
+</section>`;
+document.getElementById('foot').innerHTML = `Built from the Spike 2 main run (50 users, 3 LLM arms, Bayes and simulated agents). Exploration notes: <code>analysis/explore/NOTES.md</code>.`;
+
+/* ---------- charts ---------- */
+const CH = [];
+function base(opts) {
+  const ink2 = css('--ink-2'), rule = css('--rule');
+  return {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: {mode: 'index', intersect: false},
+    plugins: {legend: {display: !!opts.legend, labels: {color: ink2, boxWidth: 18, boxHeight: 2, font: {family: 'IBM Plex Sans, system-ui, sans-serif', size: 12}}}, tooltip: {callbacks: {label: c => `${c.dataset.label}: ${typeof c.parsed.y === 'number' ? (Math.round(c.parsed.y * 100) / 100) : c.raw}${opts.unit === '%' ? '%' : ''}`}}},
+    scales: {
+      x: {grid: {display: false}, ticks: {color: ink2}, title: {display: true, text: opts.xlab || 'rounds of feedback seen', color: css('--ink-3'), font: {size: 11}}},
+      y: {min: opts.min, max: opts.max, grid: {color: rule}, border: {display: false}, ticks: {color: ink2, callback: v => v + (opts.unit === '%' ? '%' : '')}},
+    },
+  };
+}
+function mk(id, cfg) { const el = document.getElementById(id); if (!el) return; CH.push(new Chart(el, cfg)); }
+function line(id, labels, series, opts) {
+  const ds = series.map(s => {
+    const c = s.a ? col(s.a) : s.color; const dash = s.dash || (s.a && ARM[s.a].dash);
+    return {label: s.label || ARM[s.a].label, data: s.data, borderColor: c, backgroundColor: c, borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, borderDash: dash ? [5, 4] : [], tension: 0};
+  });
+  const o = base(opts);
+  if (opts.zero) o.plugins.annotation = undefined;
+  mk(id, {type: 'line', data: {labels, datasets: ds}, options: o});
+}
+function bar(id, labels, series, opts) {
+  const o = base(Object.assign({xlab: ' '}, opts)); o.scales.x.title.display = false;
+  mk(id, {type: 'bar', data: {labels, datasets: series.map(s => ({label: ARM[s.a].label, data: s.data, backgroundColor: col(s.a), borderRadius: 3, borderSkipped: false, categoryPercentage: .78, barPercentage: .9}))}, options: o});
+}
+function simpleBar(id, labels, data, color, opts) {
+  const o = base(opts);
+  mk(id, {type: 'bar', data: {labels, datasets: [{label: opts.unit === '%' ? 'share' : 'value', data, backgroundColor: color, borderRadius: 3}]}, options: o});
+}
+function groupedBar(id, labels, series, opts) {
+  const o = base(Object.assign({}, opts)); o.scales.x.title.display = false; o.plugins.legend.display = true;
+  const ds = series.map(s => ({label: s.label, data: s.data, backgroundColor: s.colors || s.color, borderRadius: 3, categoryPercentage: .7, barPercentage: .9}));
+  const basePlugin = {id: 'baseline', afterDatasetsDraw(chart) { if (opts.base == null) return; const {ctx, chartArea: a, scales: {y}} = chart; const yy = y.getPixelForValue(opts.base); ctx.save(); ctx.strokeStyle = css('--ink-3'); ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(a.left, yy); ctx.lineTo(a.right, yy); ctx.stroke(); ctx.fillStyle = css('--ink-3'); ctx.font = '11px ' + css('--mono'); ctx.fillText('base rate ' + opts.base + '%', a.left + 4, yy - 5); ctx.restore(); }};
+  mk(id, {type: 'bar', data: {labels, datasets: ds}, options: o, plugins: [basePlugin]});
+}
+function errbar(id, groups, series, opts) {
+  // points with 95% CI whiskers; one point per arm per group
+  const labels = groups.length === 1 && opts.horizontalLabels ? series.map(s => ARM[s.a].label.replace('Gemma 4 31B · thinking', 'Thinking').replace('Bayesian Assistant', 'Bayes').replace('Gemma 4 31B', 'Gemma').replace('Qwen 2.5 7B', 'Qwen')) : groups;
+  const ds = groups.length === 1 && opts.horizontalLabels
+    ? [{label: 'estimate', data: series.map(s => s.cis[0][0]), backgroundColor: series.map(s => col(s.a)), borderColor: series.map(s => col(s.a)), pointRadius: 6, pointHoverRadius: 8, showLine: false, _ci: series.map(s => s.cis[0])}]
+    : series.map(s => ({label: ARM[s.a].label, data: s.cis.map(c => c[0]), backgroundColor: col(s.a), borderColor: col(s.a), pointRadius: 5, pointHoverRadius: 7, showLine: false, _ci: s.cis}));
+  const o = base(Object.assign({}, opts)); o.scales.x.title.display = false; o.interaction = {mode: 'nearest', intersect: true};
+  o.scales.x.offset = true;
+  o.plugins.tooltip.callbacks.label = c => { const ci = c.dataset._ci[c.dataIndex]; return `${c.dataset.label === 'estimate' ? c.label : c.dataset.label}: ${ci[0] > 0 ? '+' : ''}${ci[0]} [${ci[1]}, ${ci[2]}] · n=${ci[3]}`; };
+  const whisk = {id: 'whisk', afterDatasetsDraw(chart) {
+    const {ctx, scales: {y}} = chart; ctx.save(); ctx.lineWidth = 2;
+    chart.data.datasets.forEach((d, di) => { const meta = chart.getDatasetMeta(di); meta.data.forEach((pt, i) => { const ci = d._ci[i]; const c = Array.isArray(d.borderColor) ? d.borderColor[i] : d.borderColor; ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(pt.x, y.getPixelForValue(ci[1])); ctx.lineTo(pt.x, y.getPixelForValue(ci[2])); ctx.moveTo(pt.x - 5, y.getPixelForValue(ci[1])); ctx.lineTo(pt.x + 5, y.getPixelForValue(ci[1])); ctx.moveTo(pt.x - 5, y.getPixelForValue(ci[2])); ctx.lineTo(pt.x + 5, y.getPixelForValue(ci[2])); ctx.stroke(); }); });
+    const z = y.getPixelForValue(0); ctx.strokeStyle = css('--ink-3'); ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(chart.chartArea.left, z); ctx.lineTo(chart.chartArea.right, z); ctx.stroke(); ctx.restore(); }};
+  if (!(groups.length === 1 && opts.horizontalLabels)) {
+    // spread arms horizontally inside each group
+    const n = series.length; ds.forEach((d, k) => { d.data = d.data.map((v, gi) => ({x: gi + (k - (n - 1) / 2) * 0.16, y: v})); });
+    o.scales.x = {type: 'linear', min: -0.5, max: groups.length - 0.5, grid: {display: false}, ticks: {color: css('--ink-2'), stepSize: 1, callback: v => Number.isInteger(v) ? groups[v] : ''}};
+    o.plugins.tooltip.callbacks.title = items => groups[Math.round(items[0].parsed.x)];
+    mk(id, {type: 'scatter', data: {datasets: ds}, options: o, plugins: [whisk]});
+  } else {
+    mk(id, {type: 'line', data: {labels, datasets: ds}, options: o, plugins: [whisk]});
+  }
+}
+function strip(id, arms, get) {
+  const ds = arms.map((a, k) => ({label: ARM[a].label, data: get(a).map((v, i) => ({x: k + ((i * 37) % 50 - 25) / 70, y: v})), backgroundColor: col(a), pointRadius: 3.5, pointHoverRadius: 6}));
+  const o = base({min: 20, max: 100, unit: '%'}); o.interaction = {mode: 'nearest', intersect: true};
+  o.scales.x = {type: 'linear', min: -0.6, max: arms.length - 0.4, grid: {display: false}, ticks: {color: css('--ink-2'), stepSize: 1, callback: v => Number.isInteger(v) ? ARM[arms[v]].label.replace('Gemma 4 31B · thinking', 'Thinking').replace('Bayesian Assistant', 'Bayes').replace('Gemma 4 31B', 'Gemma').replace('Qwen 2.5 7B', 'Qwen') : ''}};
+  o.plugins.tooltip.callbacks.label = c => `${c.dataset.label}: ${c.parsed.y}%`;
+  mk(id, {type: 'scatter', data: {datasets: ds}, options: o});
+}
+function drawAll() { CH.splice(0).forEach(c => c.destroy()); SECTIONS.forEach(s => s.draw && s.draw()); }
+if (window.Chart) { Chart.defaults.font.family = 'IBM Plex Sans, system-ui, sans-serif'; drawAll(); }
+const mq = matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener && mq.addEventListener('change', () => window.Chart && drawAll());
+new MutationObserver(() => window.Chart && drawAll()).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+
+/* ---------- provenance tooltips ---------- */
+const tip = document.getElementById('tip');
+function showTip(el) { tip.textContent = 'Source: ' + el.dataset.src; tip.hidden = false; const r = el.getBoundingClientRect(); const w = Math.min(320, innerWidth - 24); tip.style.maxWidth = w + 'px'; let left = Math.min(Math.max(12, r.left), innerWidth - w - 12); tip.style.left = left + 'px'; tip.style.top = (r.bottom + 8) + 'px'; }
+document.addEventListener('mouseover', e => { const el = e.target.closest('.num'); if (el) showTip(el); });
+document.addEventListener('mouseout', e => { if (e.target.closest('.num')) tip.hidden = true; });
+document.addEventListener('focusin', e => { const el = e.target.closest('.num'); if (el) showTip(el); });
+document.addEventListener('focusout', e => { if (e.target.closest('.num')) tip.hidden = true; });
+document.addEventListener('scroll', () => { tip.hidden = true; }, {passive: true});
+
+/* ---------- nav highlight ---------- */
+const links = [...document.querySelectorAll('nav.index a')];
+const obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(l => l.classList.toggle('on', l.dataset.id === e.target.id)); }), {rootMargin: '-30% 0px -60% 0px'});
+document.querySelectorAll('section.claim').forEach(s => obs.observe(s));
+</script>

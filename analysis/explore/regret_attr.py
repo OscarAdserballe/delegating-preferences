@@ -1,0 +1,15 @@
+exec(open("load.py").read())
+h=held[(held.checkpoint>=3)&(~held.correct)&held.pick.notna()&held.arm.isin(LLM+["bayes","copy_last","random"])].copy()
+th=np.stack([D.users[u].theta for u in h.user_id])
+best=np.array([np.argmax(H[i]@D.users[u].theta) for u,i in zip(h.user_id,h.menu_index)])
+dphi=H[h.menu_index.to_numpy(),best]-H[h.menu_index.to_numpy(),h.pick.astype(int).to_numpy()]
+contrib=dphi*th   # per-attribute utility lost (positive = lost on that attribute)
+C=pd.DataFrame(contrib,columns=FEAT); C["arm"]=h.arm.to_numpy()
+print("mean utility lost per wrong pick, by attribute (cp>=3; negative = the wrong pick was better on that attribute):")
+print(C.groupby("arm")[FEAT].mean().round(3).loc[LLM+["bayes","copy_last","random"]])
+# signed direction: for wrong picks, is the chosen flight cheaper than the best one?
+h["pick_cheaper_than_best"]=(H[h.menu_index.to_numpy(),h.pick.astype(int).to_numpy(),3]<H[h.menu_index.to_numpy(),best,3])
+h["pick_shorter"]=(H[h.menu_index.to_numpy(),h.pick.astype(int).to_numpy(),1]<H[h.menu_index.to_numpy(),best,1])
+h["pick_fewer_stops"]=(H[h.menu_index.to_numpy(),h.pick.astype(int).to_numpy(),2]<H[h.menu_index.to_numpy(),best,2])
+print("\nwrong picks (cp>=3): share where the chosen flight is cheaper / shorter / has fewer stops than the user's best one (%):")
+print((h.groupby("arm")[["pick_cheaper_than_best","pick_shorter","pick_fewer_stops"]].mean()*100).round(1).loc[LLM+["bayes","copy_last","random"]])

@@ -1,0 +1,541 @@
+<title>Whose Preferences Fill the Gaps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky claim index on the left (top bar on phones), one long evidence column; each claim = chart + for/against + raw traces. */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --ink:#14202b; --ink-2:#4a5866; --ink-3:#7a8794; --rule:#dfe4e8; --tint:#eef2f4;
+  --accent:#14202b; --good:#1d7a4f; --warn:#a15c00; --bad:#b3322b;
+  --s-bayes:#2a78d6; --s-qwen:#eb6834; --s-gemma:#1baf7a; --s-think:#6250d6; --s-ref:#8a949e;
+  --display:"Archivo Narrow","Arial Narrow",Arial,sans-serif; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11161b; --surface:#182027; --ink:#e7ecef; --ink-2:#aab6c0; --ink-3:#7f8c97; --rule:#2a343d; --tint:#1d262e;
+  --accent:#e7ecef; --good:#4fbf8a; --warn:#e0a24a; --bad:#ef7b72;
+  --s-bayes:#3987e5; --s-qwen:#d95926; --s-gemma:#199e70; --s-think:#9085e9; --s-ref:#7f8c97; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161b; --surface:#182027; --ink:#e7ecef; --ink-2:#aab6c0; --ink-3:#7f8c97; --rule:#2a343d; --tint:#1d262e;
+  --accent:#e7ecef; --good:#4fbf8a; --warn:#e0a24a; --bad:#ef7b72;
+  --s-bayes:#3987e5; --s-qwen:#d95926; --s-gemma:#199e70; --s-think:#9085e9; --s-ref:#7f8c97; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
+a{color:inherit}
+.wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;max-width:1240px;margin:0 auto;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+nav.index{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;max-height:calc(100vh - 40px);overflow:auto;font-size:13px}
+nav.index .eyebrow{margin-bottom:10px}
+nav.index ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+nav.index a{display:grid;grid-template-columns:22px 1fr;gap:6px;text-decoration:none;color:var(--ink-2);padding:6px 8px;border-radius:6px;line-height:1.35}
+nav.index a:hover,nav.index a:focus-visible{background:var(--tint);color:var(--ink)}
+nav.index a.on{background:var(--tint);color:var(--ink);font-weight:600}
+nav.index .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);padding-top:2px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+main{min-width:0}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1.02;letter-spacing:-.01em;margin:6px 0 14px;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(25px,3.2vw,32px);line-height:1.1;margin:0 0 10px;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 6px;letter-spacing:.005em}
+p{margin:0 0 12px;max-width:70ch}
+.lede{font-size:17px;color:var(--ink-2);max-width:68ch}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px 18px;margin:16px 0 8px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.meta-row b{color:var(--ink);font-weight:500}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2);margin:10px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:3px;border-radius:2px;display:inline-block}
+.sw.dash{background:repeating-linear-gradient(90deg,var(--c) 0 5px,transparent 5px 8px)!important}
+/* landing claim list */
+.claims{display:grid;gap:10px;margin:22px 0 8px;padding:0;list-style:none}
+.claims li{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:4px 14px;align-items:start;padding:14px 16px;background:var(--surface);border:1px solid var(--rule);border-radius:10px}
+.claims .n{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding-top:3px}
+.claims .t{font-weight:600}
+.claims .t a{text-decoration:none}
+.claims .t a:hover{text-decoration:underline}
+.claims .obj{grid-column:2/4;font-size:13.5px;color:var(--ink-2)}
+.claims .obj::before{content:"Strongest objection · ";font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.chip.hi{color:var(--good)} .chip.md{color:var(--warn)} .chip.lo{color:var(--bad)}
+/* claim sections */
+section.claim{padding-top:46px;margin-top:40px;border-top:1px solid var(--rule)}
+.claim-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:6px}
+.statement{font-size:18px;font-weight:500;max-width:68ch;margin:6px 0 14px;text-wrap:pretty}
+.pm{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:14px 0 18px}
+.pm div{background:var(--tint);border-radius:8px;padding:12px 14px;font-size:14px}
+.pm b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500;margin-bottom:4px}
+figure{margin:18px 0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px 16px 12px}
+figure .cap{font-size:13.5px;color:var(--ink-2);margin:8px 0 0;max-width:none}
+figure .ftitle{font-weight:600;font-size:14.5px;margin-bottom:2px}
+figure .fsub{font-size:12.5px;color:var(--ink-3);margin-bottom:8px;font-family:var(--mono)}
+.chart{position:relative;height:280px}
+.chart.tall{height:320px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px}
+.grid2 figure,.grid3 figure{margin:0}
+.chart.small{height:200px}
+.fa{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:18px 0}
+.fa > div{border-radius:10px;padding:14px 16px;border:1px solid var(--rule);background:var(--surface)}
+.fa h4{margin:0 0 8px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+.fa .for h4{color:var(--good)} .fa .against h4{color:var(--bad)}
+.fa ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.num{font-family:var(--mono);font-size:.92em;border-bottom:1px dotted var(--ink-3);cursor:help;font-variant-numeric:tabular-nums;position:relative;white-space:nowrap}
+.num:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.tip{position:fixed;z-index:50;max-width:320px;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:11.5px;line-height:1.45;padding:8px 10px;border-radius:6px;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+details.raw{margin:12px 0;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
+details.raw summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+details.raw summary::-webkit-details-marker{display:none}
+details.raw summary::after{content:"+";font-family:var(--mono);color:var(--ink-3)}
+details.raw[open] summary::after{content:"–"}
+details.raw .body{padding:0 16px 14px;display:flex;flex-direction:column;gap:12px}
+.trace{border-left:3px solid var(--s-think);background:var(--tint);border-radius:0 8px 8px 0;padding:10px 12px;min-width:0}
+.trace.qwen{border-left-color:var(--s-qwen)}
+.trace pre{margin:6px 0 0;font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.prov{font-family:var(--mono);font-size:11px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:4px 12px}
+.trace .why{font-size:13px;color:var(--ink-2);margin-top:4px}
+table.t{border-collapse:collapse;font-size:13px;width:100%;font-variant-numeric:tabular-nums}
+table.t th,table.t td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t th{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.tscroll{overflow-x:auto}
+.vig{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.vcard{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px}
+.vtop{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px}
+.theta{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.theta span{font-family:var(--mono);font-size:11.5px;padding:3px 7px;border-radius:5px;background:var(--tint)}
+.rounds{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.rnd{display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;font-size:13px}
+.rnd .lab{font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.rnd .lab .ok{color:var(--good);font-weight:600} .rnd .lab .no{color:var(--bad);font-weight:600}
+.rnd .q{font-family:var(--mono);font-size:11.5px;color:var(--ink);background:var(--tint);border-radius:6px;padding:6px 8px;white-space:pre-wrap;word-break:break-word}
+.held{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
+.held > div{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;font-size:14px}
+.held b{font-weight:600}
+.callout{background:var(--tint);border-radius:10px;padding:14px 16px;font-size:14.5px;margin:16px 0}
+.foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-2)}
+@media (max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:16px}
+  nav.index{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;max-height:none;background:var(--bg);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:8px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--rule)}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+  nav.index .eyebrow{display:none}
+  nav.index ol{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  nav.index a{grid-template-columns:auto auto;white-space:nowrap;padding:6px 10px}
+  nav.index .lbl{display:none}
+  nav.index a .short{display:inline}
+  .vtop{grid-template-columns:minmax(0,1fr)}
+  .claims li{grid-template-columns:28px minmax(0,1fr)}
+  .claims .chip{grid-column:2}
+  .claims .obj{grid-column:2}
+}
+nav.index .short{display:none}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<nav class="index" aria-label="Claims">
+  <div class="eyebrow">Slices</div>
+  <ol id="navlist"></ol>
+</nav>
+<main>
+  <header>
+    <div class="eyebrow">Spike 2 · data mining on the main run · Qiu et al. (2026) flight task</div>
+    <h1>Whose preferences fill the gaps?</h1>
+    <p class="lede">Fifty simulated travellers with hidden preferences, five rounds of feedback, three language models and an exact Bayesian benchmark. This page slices the 242,000 logged decisions and about 25,000 thinking traces along the axes where something showed up. Each slice states one pattern, says how sure I am, puts the evidence against it next to the evidence for it, and lets you open the raw traces.</p>
+    <div class="meta-row">
+      <span><b>50</b> users × <b>605</b> decisions per arm</span>
+      <span>Arms: <b>Qwen 2.5 7B</b>, <b>Gemma 4 31B</b>, <b>Gemma 4 31B thinking</b> (1,024-token cap), <b>Bayes</b></span>
+      <span>CIs: 95%, resampling users</span>
+      <span>Hover or tab to any <span class="num" tabindex="0" data-src="Example: every dotted number names the script and sample it came from.">dotted number</span> for its source</span>
+    </div>
+    <div class="legend" id="legend-main"></div>
+    <div class="callout"><b>How to read “contrarian”.</b> All three models start from the same default traveller: cheaper, shorter, fewer stops (slice 1). I call a user <i>contrarian</i> on an attribute when they want the opposite of that default (pricier, longer, or more stops). Users split 14 / 18 / 18 into 0, 1, and 2–3 contrarian attributes. “Welfare” is the share of achievable utility delivered: 100% always picks the user’s best flight, 0% always picks the worst, random picking gives about 50%.</div>
+    <ol class="claims" id="claimlist"></ol>
+  </header>
+  <div id="sections"></div>
+  <div class="foot" id="foot"></div>
+</main>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script id="data" type="application/json">{"acc_by_type":{"0":{"qwen25-7b":[58.9,55.9,55.6,56.4,49.1,51.9],"gemma4-31b":[58.8,62.3,63.4,65.1,65.0,65.4],"gemma4-31b-think":[62.4,62.4,61.6,61.9,66.2,69.7],"bayes":[35.3,56.7,67.3,76.3,76.1,81.4],"convbayes":[66.4,72.0,75.2,78.0,80.8,85.9]},"1":{"qwen25-7b":[37.1,34.9,36.6,36.8,37.6,36.8],"gemma4-31b":[38.4,45.8,53.2,56.3,60.6,61.3],"gemma4-31b-think":[37.8,51.8,56.6,59.7,63.1,63.6],"bayes":[33.7,60.0,72.4,75.3,79.6,81.2],"convbayes":[39.0,53.3,64.9,67.1,73.6,74.1]},"2":{"qwen25-7b":[18.8,24.2,27.4,29.2,24.6,28.4],"gemma4-31b":[18.3,30.8,42.3,48.6,47.6,52.7],"gemma4-31b-think":[18.2,32.7,48.8,56.0,55.3,56.4],"bayes":[32.3,51.8,65.4,73.5,76.2,79.2],"convbayes":[18.3,25.6,48.7,62.5,67.9,71.9]}},"n_by_type":{"0":14,"1":18,"2":18},"acc_overall":{"qwen25-7b":[36.6,37.0,38.6,39.5,36.2,38.0],"gemma4-31b":[36.9,45.0,52.1,56.0,57.2,59.4],"gemma4-31b-think":[37.6,47.9,55.2,59.0,61.2,62.7],"bayes":[33.6,56.1,68.5,74.9,77.4,80.5],"copy_last":[34.4,46.1,47.8,48.9,47.1,51.1],"random":[33.8,33.2,32.8,34.8,31.9,33.3]},"acc0_by_contra":{"qwen25-7b":[58.9,37.1,21.0,8.0],"gemma4-31b":[58.8,38.4,20.3,8.3],"gemma4-31b-think":[62.4,37.8,20.5,6.7],"bayes":[35.3,33.7,32.9,29.3]},"n_by_contra":[14,18,15,3],"default_w":{"qwen25-7b":[-0.15,-1.12,-1.03,-1.38],"gemma4-31b":[-0.35,-0.95,-1.18,-1.19],"gemma4-31b-think":[-0.34,-1.54,-0.98,-1.33]},"default_dependence":{"qwen25-7b":[0.97,0.88,0.81,0.81,0.8,0.81],"gemma4-31b":[0.95,0.78,0.56,0.49,0.5,0.36],"gemma4-31b-think":[0.98,0.76,0.42,0.28,0.37,0.36],"bayes":[0.26,0.17,0.16,0.13,0.17,0.29]},"gain_by_type":{"qwen25-7b":{"conventional":[-7.0,-11.93,-2.43,14],"contrarian":[9.61,5.44,13.67,18]},"gemma4-31b":{"conventional":[6.64,1.21,12.71,14],"contrarian":[34.33,27.11,41.83,18]},"gemma4-31b-think":{"conventional":[7.29,1.79,13.57,14],"contrarian":[38.17,29.17,46.83,18]},"bayes":{"conventional":[46.14,40.0,51.79,14],"contrarian":[46.89,40.67,53.22,18]}},"convbayes_minus_think":{"0":{"0":[4.0,0.36,7.57,14],"5":[16.21,10.21,22.07,14]},"1":{"0":[1.22,-1.78,4.39,18],"5":[10.5,3.72,17.61,18]},"2":{"0":[0.11,-1.44,1.94,18],"5":[15.56,6.33,25.11,18]}},"net_learning":{"qwen25-7b":{"conventional":[-1.0,-1.93,-0.04,14],"one":[0.46,-0.43,1.4,18],"contrarian":[1.06,0.33,1.76,18]},"gemma4-31b":{"conventional":[0.79,-0.43,1.98,14],"one":[3.88,2.1,5.61,18],"contrarian":[5.47,3.18,7.6,18]},"gemma4-31b-think":{"conventional":[1.82,0.62,3.18,14],"one":[2.96,1.36,4.46,18],"contrarian":[5.92,3.4,8.31,18]},"bayes":{"conventional":[6.18,4.25,8.29,14],"one":[5.29,3.5,7.07,18],"contrarian":[6.86,5.28,8.39,18]}},"learn_unlearn":{"qwen25-7b":{"conventional":[14.7,15.7],"contrarian":[20.8,19.8]},"gemma4-31b":{"conventional":[8.8,8.1],"contrarian":[18.4,12.9]},"gemma4-31b-think":{"conventional":[9.7,7.8],"contrarian":[18.1,12.1]},"bayes":{"conventional":[10.7,4.5],"contrarian":[10.8,3.9]}},"archetypes":{"qwen25-7b":{"still failing at round 5":38,"starts right, stays put":12},"gemma4-31b":{"starts wrong, learns":17,"other":15,"starts right, stays put":9,"still failing at round 5":9},"gemma4-31b-think":{"other":18,"starts wrong, learns":17,"starts right, stays put":9,"still failing at round 5":6},"bayes":{"starts wrong, learns":42,"other":8}},"welfare_overall":{"qwen25-7b":[52.3,53.4,54.6,55.2,52.0,54.5],"gemma4-31b":[51.9,61.1,68.1,71.7,72.3,75.0],"gemma4-31b-think":[53.1,63.3,70.9,73.8,75.6,77.6],"bayes":[49.5,71.6,82.2,87.4,89.2,91.0],"copy_last":[50.8,63.4,65.2,65.9,64.8,68.7],"random":[49.8,48.8,48.5,50.4,48.8,49.5]},"welfare_by_type":{"0":{"qwen25-7b":[73.9,71.2,70.4,71.8,64.6,67.9],"gemma4-31b":[73.5,77.1,77.9,79.6,78.5,80.3],"gemma4-31b-think":[77.1,77.0,76.0,76.5,79.6,83.4],"bayes":[50.2,72.2,81.4,88.6,88.4,91.4]},"1":{"qwen25-7b":[54.5,52.6,53.6,53.1,55.0,53.4],"gemma4-31b":[54.2,62.6,69.4,72.2,76.3,77.5],"gemma4-31b-think":[54.7,68.3,72.6,74.7,77.7,79.0],"bayes":[49.7,75.7,85.5,87.9,91.4,92.1]},"2":{"qwen25-7b":[33.3,40.3,43.4,44.4,39.3,45.1],"gemma4-31b":[32.8,47.2,59.3,65.0,63.6,68.3],"gemma4-31b-think":[32.9,47.6,65.2,70.7,70.3,71.6],"bayes":[48.8,67.0,79.6,86.0,87.6,89.6]}},"welfare_tail":{"qwen25-7b":{"min":31.1,"p10":41.7,"below60":35,"below70":43},"gemma4-31b":{"min":46.1,"p10":58.1,"below60":8,"below70":15},"gemma4-31b-think":{"min":42.5,"p10":64.0,"below60":4,"below70":10},"bayes":{"min":70.6,"p10":79.5,"below60":0,"below70":0}},"welfare_users":{"qwen25-7b":[49.6,50.4,53.5,63.4,68.2,56.1,61.6,52.3,48.8,51.1,48.0,51.6,33.0,65.2,76.9,50.0,31.1,63.0,41.8,55.5,33.1,72.3,84.6,61.9,88.3,54.1,56.4,33.6,41.9,46.1,54.8,57.0,74.4,47.7,75.6,50.7,46.3,73.1,40.6,48.5,49.6,68.4,53.1,64.1,50.9,46.0,44.5,49.4,44.4,42.1],"gemma4-31b":[69.7,63.1,46.1,75.5,68.0,58.8,71.2,76.7,53.1,81.7,64.3,75.3,68.2,91.7,86.0,65.6,60.0,85.9,74.2,76.7,79.2,83.1,84.6,88.0,88.6,70.4,95.9,80.3,74.9,78.2,91.0,76.9,88.4,67.7,82.3,83.2,78.1,76.8,56.5,83.0,85.6,88.0,82.7,81.6,49.7,83.3,58.3,47.2,79.1,74.3],"gemma4-31b-think":[70.9,70.7,42.5,81.0,79.6,69.6,68.0,81.2,54.2,81.7,76.9,77.6,71.4,89.9,84.6,66.3,64.8,87.8,75.0,77.2,74.2,90.8,87.4,82.6,94.2,83.3,100.0,84.0,89.9,88.6,93.1,71.1,90.2,76.1,87.4,86.9,79.0,80.3,64.3,85.0,83.7,85.8,79.7,79.5,52.9,79.4,61.4,46.3,75.3,75.5],"bayes":[98.3,78.7,91.2,99.2,92.8,95.9,92.9,93.0,79.6,86.9,76.6,89.7,91.1,97.6,99.8,96.0,96.6,94.8,99.0,90.9,92.4,98.4,83.9,90.6,97.8,93.3,78.6,86.5,96.3,81.9,88.1,94.7,85.5,99.9,94.8,91.3,90.3,89.2,70.6,77.5,96.3,95.9,94.6,99.2,95.5,92.4,80.0,98.0,95.2,81.2]},"exchange":{"qwen25-7b":[0.22,0.06,0.39],"gemma4-31b":[1.32,0.98,1.64],"gemma4-31b-think":[1.56,1.2,1.93]},"abs_w":{"qwen25-7b":[0.24,0.62,0.62,0.6],"gemma4-31b":[0.3,1.05,1.06,0.99],"gemma4-31b-think":[0.3,1.1,1.03,0.98],"bayes":[0.9,1.12,1.5,1.03],"oracle":[1.01,1.12,1.29,1.02]},"dir_curves":{"qwen25-7b":{"price_pricier":[0.0,0.0,6.0,0.0,6.0,11.0],"price_cheaper":[100.0,100.0,95.0,95.0,90.0,100.0],"departure_early":[100.0,57.0,57.0,67.0,67.0,86.0],"departure_late":[0.0,16.0,47.0,37.0,16.0,21.0],"duration_longer":[0.0,19.0,12.0,19.0,31.0,12.0],"stops_more":[0.0,9.0,17.0,13.0,9.0,22.0]},"gemma4-31b":{"price_pricier":[0.0,6.0,28.0,44.0,44.0,61.0],"price_cheaper":[100.0,100.0,100.0,95.0,95.0,100.0],"departure_early":[100.0,48.0,48.0,52.0,67.0,71.0],"departure_late":[0.0,47.0,42.0,58.0,58.0,47.0],"duration_longer":[0.0,50.0,75.0,88.0,94.0,94.0],"stops_more":[0.0,43.0,61.0,83.0,91.0,87.0]},"gemma4-31b-think":{"price_pricier":[0.0,11.0,61.0,50.0,44.0,61.0],"price_cheaper":[100.0,95.0,95.0,95.0,95.0,95.0],"departure_early":[100.0,43.0,67.0,43.0,67.0,76.0],"departure_late":[0.0,37.0,42.0,47.0,63.0,42.0],"duration_longer":[0.0,44.0,81.0,88.0,94.0,88.0],"stops_more":[0.0,52.0,57.0,74.0,87.0,83.0]},"bayes":{"price_pricier":[0.0,61.0,72.0,83.0,100.0,94.0],"price_cheaper":[100.0,86.0,95.0,100.0,95.0,100.0],"departure_early":[100.0,52.0,90.0,76.0,90.0,95.0],"departure_late":[0.0,74.0,68.0,74.0,84.0,89.0],"duration_longer":[100.0,75.0,94.0,94.0,94.0,94.0],"stops_more":[0.0,74.0,91.0,100.0,100.0,100.0]}},"dir_n":{"price_pricier":18,"departure_any":40},"dir_ci":{"qwen25-7b":{"departure":[55.0,40.0,70.0,40],"price_pricier":[11.11,0.0,27.78,18]},"gemma4-31b":{"departure":[60.0,45.0,75.0,40],"price_pricier":[61.11,38.89,83.33,18]},"gemma4-31b-think":{"departure":[60.0,45.0,75.0,40],"price_pricier":[61.11,38.89,83.33,18]},"bayes":{"departure":[92.5,82.5,100.0,40],"price_pricier":[94.44,83.33,100.0,18]}},"price_fill":{"qwen25-7b":[-1.38,-0.76,-0.7,-0.87,-0.42,-0.62],"gemma4-31b":[-1.19,-0.59,-0.65,-0.55,-0.48,-0.65],"gemma4-31b-think":[-1.33,-0.38,-0.53,-0.41,-0.39,-0.56],"bayes":[-0.26,0.49,-0.02,-0.05,0.09,0.04],"oracle":[-0.01,-0.01,-0.01,-0.01,-0.01,-0.01]},"price_fill_ci":{"qwen25-7b":[-0.65,-1.25,-0.03,11],"gemma4-31b":[-0.69,-1.02,-0.36,11],"gemma4-31b-think":[-0.6,-0.96,-0.25,11]},"echo":{"qwen25-7b":{"after_correct":36.5,"after_incorrect":86.1,"paired_diff":[48.55,45.35,51.84,41]},"gemma4-31b":{"after_correct":34.2,"after_incorrect":50.3,"paired_diff":[13.76,10.96,16.65,46]},"gemma4-31b-think":{"after_correct":34.4,"after_incorrect":44.7,"paired_diff":[8.19,5.79,10.59,46]},"bayes":{"after_correct":32.9,"after_incorrect":33.7,"paired_diff":[1.0,-0.38,2.41,48]}},"echo_base":33.5,"echo_acc":{"qwen25-7b":{"echo":33.0,"no_echo":32.6},"gemma4-31b":{"echo":44.9,"no_echo":54.8},"gemma4-31b-think":{"echo":48.6,"no_echo":54.4}},"pos_penalty":{"qwen25-7b":[-5.35,-9.57,-1.21,50],"gemma4-31b":[-6.11,-8.96,-3.15,50],"gemma4-31b-think":[-3.47,-6.62,-0.4,50],"bayes":[-1.35,-3.37,0.74,50]},"cut_by_incorrect":[{"n_incorrect_so_far":0,"cut":44.0,"n":54},{"n_incorrect_so_far":1,"cut":62.0,"n":84},{"n_incorrect_so_far":2,"cut":92.0,"n":68},{"n_incorrect_so_far":3,"cut":96.0,"n":32},{"n_incorrect_so_far":4,"cut":100.0,"n":11},{"n_incorrect_so_far":5,"cut":100.0,"n":1}],"n_traces":25406,"style_share":{"neither":59.0,"lexicographic":41.0,"compensatory":0.1},"by_cp":{"contra":[1.8,1.3,10.1,10.4,13.0,14.2],"typical":[60.0,6.9,3.0,1.0,0.7,1.2],"test":[35.8,15.4,3.7,0.6,0.2,0.0],"hyp":[26.7,65.9,67.6,53.3,32.0,22.4]},"hyp_per_trace":[0.61,1.99,1.65,1.07,0.6,0.36],"transcribe_by_cp":[21.5,33.1,38.4,43.6,45.5,47.2],"contra_claim_cp2plus":11.9,"extreme_copy":{"qwen25-7b":[38.4,40.9,39.2],"gemma4-31b":[40.6,55.2,52.2],"gemma4-31b-think":[38.7,60.1,57.9],"bayes":[42.4,64.6,61.0]},"latest_minus_earlier":{"qwen25-7b":[1.54,-2.88,5.57,34],"gemma4-31b":[6.29,-0.35,12.76,33],"gemma4-31b-think":[7.93,2.97,12.78,29],"bayes":[-5.4,-11.77,0.67,28]},"excerpts":{"objectively":{"user":378,"checkpoint":0,"key":"0a34d89a2706","theta":[0.5,-1.0,-1.0,1.0],"finish":"stop","text":"\u2026h a short duration, maybe short hops). Flight 2 is moderate (4h 24m). Flight 3 is very long (16h 6m).\n    *   *Departure Time:* Flight 1 is early morning. Flights 2 and 3 are afternoon.\n\n    *   Flight 2 is the cheapest.\n    *   Flight 2 is the only non-stop flight.\n    *   Flight 2 has a reasonable duration (much shorter than Flight 3, slightly longer than Flight 1).\n    *   Flight 1 is expensive and has multiple stops.\n    *   Flight 3 is expensive, very long, and has a stop.\n\n    Flight 2 is objectively the best choice in almost every category (price, convenience/stops).\u2026","where":"live round 1"},"typical":{"user":23,"checkpoint":0,"key":"d3d457f3051b","theta":[-1.0,-1.0,1.0,0.5],"finish":"length","text":"\u2026ler. If I pick Flight 3, I'm a time-sensitive traveler.\n    *   Usually, \"best\" implies a balance or a clear winner in a specific category.\n    *   Flight 2 is the clear winner for price.\n    *   Flight 3 is the clear winner for time.\n\n    *   Let's look at the prompt again: \"figure out my preferences\". Since this is the first interaction, I have to make an assumption.\n    *   Commonly, people prefer shorter flights and fewer stops.\n    *   Flight 3: 2h 27m, 1 stop.\n    *   Flig\u2026","where":"live round 1"},"one_shot":{"user":310,"checkpoint":1,"key":"3b15ac49163d","theta":[0.0,0.0,0.0,-1.0],"finish":"stop","text":"\u2026of stops.\n\n    *   Flight 1:\n        *   Departure: 03:36 PM\n        *   Duration: 8 hr 18 min\n        *   Stops: 1\n        *   Price: $280\n    *   Flight 2:\n        *   Departure: 10:00 PM\n        *   Duration: 30 min\n        *   Stops: 0\n        *   Price: $1000\n    *   Flight 3:\n        *   Departure: 10:00 PM\n        *   Duration: 4 hr 24 min\n        *   Stops: 1\n        *   Price: $550\n\n    *   Preference identified: Lowest price.\n    *   Flight 1: $280\n    *   Flight 2: $1000\n    *   Flight 3: $550\n    *   Lowest price is Flight 1.\n\n    *   Flight 1 is the cheapest. Based on the previous correction, the user prefers the cheapest option regardless of duration or stops.","where":"live round 2"},"unusual":{"user":77,"checkpoint":1,"key":"30d4b14eaab8","theta":[-1.0,0.5,-1.0,0.0],"finish":"length","text":"\u2026*   Duration: Flight 3 is much longer.\n        *   Price: Flight 3 is much more expensive.\n        *   Stops: Both have 1 stop.\n        *   Departure time: 03:36 PM vs 02:00 PM (negligible difference).\n\n    *   *Hypothesis 1: The user likes long flights.* (Unusual, but possible).\n    *   *Hypothesis 2: The user likes expensive flights.* (Unusual).\n    *   *Hypothesis 3: The user likes specific departure times?* (02:00 PM vs 03:36 PM - not a strong signal).\n    *   *Hypothesis 4: The user dislikes short durations?*\n    *   *Hypothesis 5: The user prefers a specific price point?* ($910).\n\n    Let's look\u2026","where":"live round 2"},"contradiction":{"user":568,"checkpoint":3,"key":"60ce60c58d43","theta":[1.0,0.0,0.5,1.0],"finish":"length","text":"\u2026. Flight 1 is cheapest but slower and has a stop. Flight 3 is very slow.\n        *   *Initial Hypothesis:* Prefers shortest duration and 0 stops over price.\n\n    *   *Round 2:*\n        *   Flight 1: 05:12 PM, 10h 15m, 1 stop, $550\n        *   Flight 2: 10:48 AM, 16h 6m, 1 stop, $1000\n        *   Flight 3: 07:36 AM, 14h 9m, 1 stop, $1000\n        *   User Preference: Flight 2.\n        *   *Analysis:* All have 1 stop. Flight 1 is the fastest and cheapest. Flight 2 is the slowest and most expensive.\n        *   *Wait, this contradicts the first round.* Let's look at departure times.\n        *   Flight 1: 05:12 PM\n        *   Flight 2: 10:48 AM\n        *   Flight 3: 07:36 AM\n        *   User preferred Flight 2 (10:48 AM).\n        *   Maybe they prefer morning/midday departures?\n\n    *   *Round 3:*\n        *   Flight 1: 07:36 AM, 10h 15m, 2 stops, $190\n        *   Flight 2: 0\u2026","where":"trace"},"crucial":{"user":126,"checkpoint":5,"key":"358bf88ca227","theta":[-0.5,-1.0,-1.0,-0.5],"finish":"stop","text":"\u2026*   F1: 10:48 AM, 30m, 0 stops, $910\n        *   F2: 08:24 PM, 30m, 1 stop, $190 (I picked this, but user said INCORRECT, prefers F1)\n        *   F3: 09:12 AM, 20h, 1 stop, $280\n        *   *Observation:* F1 vs F2. Both are 30m. F1 has 0 stops, F2 has 1 stop. F1 is much more expensive ($910 vs $190).\n        *   *Crucial Insight:* The user prefers 0 stops over a lower price, even a significantly lower price.\n\n    *   Priority 1: Number of stops (0 stops is highly preferred).\n    *   Priority 2: Duration (Shorter is better).\n    *   Priority 3: Price (Cheaper is better, but secondary to stops).\n\n    *   Flight 1: 10:48 AM, 8h 18m, 1 stop, $910\n    *   Flight 2: 02:00 PM, 20h, 0 stops, $370\n    *   Flight 3: 06:48 PM, 30m, 1 stop, $550\n\n    *   Flight 2 has 0 stops.\n    *   Flight 1 and 3 have 1 stop.\n    *   Based on the correction in Example 5 (where the user chose a $910 flight with 0 stops over a $190 flight with 1 stop), the number of stops is the most important factor.\n\n    *   Flight 2 is the only one with 0 s\u2026","where":"held-out menu 8"},"flight3_pattern":{"user":169,"checkpoint":3,"key":"b922f77d3d34","theta":[-0.5,-0.5,0.5,1.0],"finish":"length","text":"\u2026/ $550.\n    *   *Round 2:* Prefers 2h 27m / 1 stop / $820 over 30 min / 0 stop / $100.\n    *   *Round 3:* Prefers 30 min / 0 stop / $1000 over 4h 24m / 2 stop / $730.\n\n    *   Wait, let's look at the \"Flight 3\" pattern.\n    *   Round 1: Flight 3 (2h 27m, 1 stop, $820)\n    *   Round 2: Flight 3 (2h 27m, 1 stop, $820)\n    *   Round 3: Flight 3 (30 min, 0 stop, $1000)\n\n    Is there a pattern in the *departure time*?\n    *   Round 1: Flight 3 departs 03:36 PM.\n    *   Round 2: Flight 3 departs 10:48 AM.\n    *   Round 3: Flight 3 departs 03:36 PM.\n\n    Is there a pattern in the *price*?\n    *   Round 1: $820\n    *   Round 2: $820\n    *\u2026","where":"held-out menu 22"},"tally":{"user":19,"checkpoint":5,"key":"8b238854043a","theta":[-1.0,-1.0,0.5,1.0],"finish":"stop","text":"\u20262h 12m, 0 stops, $910\n        *   User preferred: **Flight 1** (Highest price, shortest duration, most stops).\n\n    *   Price: User consistently picks the most expensive flight.\n        *   R1: $820 (max)\n        *   R2: $910 (max)\n        *   R3: $1000 (max)\n        *   R4: $1000 (max)\n        *   R5: $1000 (max)\n    *   Duration: User seems to prefer longer durations, but not always (R5 was shortest). However, price seems to be the primary driver.\n    *   Stops: User seems to prefer more stops.\n        *   R1: 2 stops (max)\n        *   R2: 2 stops (max)\n        *   R3: 2 stops (max)\n        *   R4: 2 stops (max)\n        *   R5: 1 stop (max)\n\n    *   Flight 1: 08:24 PM, 16h 6m, 0\u2026","where":"held-out menu 21"},"no_pattern":{"user":23,"checkpoint":2,"key":"49c723a2b55d","theta":[-1.0,-1.0,1.0,0.5],"finish":"length","text":"\u2026tops:\n            *   Round 1: 1 stop\n            *   Round 2: 2 stops\n        *   Price:\n            *   Round 1: $1000 (Highest)\n            *   Round 2: $640 (Mid)\n\n    *   *Wait, is there a pattern with the departure time?*\n        *   Round 1: 08:24 PM\n        *   Round 2: 10:48 AM\n        *   No obvious pattern yet.\n\n    *   *Is there a pattern with the price?*\n        *   Round 1: $1000 (Highest)\n        *   Round 2: $640 (Mid)\n        *   No obvious pattern.\n\n    *   *Is there a pattern with the duration?*\n        *   Round 1: Shortest\n        *   Round 2: Longest\n        *   Contradictory.\n\n    *   *Le\u2026","where":"live round 3"},"why_f1":{"user":378,"checkpoint":3,"key":"3c5c0a1879de","theta":[0.5,-1.0,-1.0,1.0],"finish":"length","text":"\u2026*   Flight 2: 02:00 PM, 4h 24m, 2 stops, $370\n        *   Flight 3: 06:48 PM, 8h 18m, 1 stop, $190\n        *   *Observation:* User preferred Flight 1 despite it being the most expensive and not the fastest.\n        *   Comparing F1 vs F2: F1 has fewer stops (1 vs 2).\n        *   Comparing F1 vs F3: F1 is faster (6h 21m vs 8h 18m) and departs earlier (12:24 PM vs 6:48 PM).\n        *   Wait, F1 is $1000, F3 is $190. Why F1?\n        *   Maybe the user prefers fewer stops and shorter duration over price?\n        *   Let's look at Example 3.\n\n    *   *Example 3:*\n        *   Flight 1\u2026","where":"live round 4"},"priority_156":{"user":156,"checkpoint":4,"key":"532792f616c2","theta":[-0.5,-0.5,-0.5,-0.5],"finish":"length","text":"\u2026st and has 0 stops, despite being longer than F1.*\n\n    *   Priority 1: Number of stops (0 is highly preferred).\n    *   Priority 2: Price (Lower is better).\n    *   Priority 3: Duration (Shorter is better).\n\n    Let's re-evaluate the choices:\n    *   R1: F1 (1 stop, 6h, $550) vs F2 (0 stop, 12h, $820) vs F3 (1 stop, 14h, $910).\n        Wait, in R1, F1 was chosen. F1 has 1 stop, F2 has 0 stops. If 0 stops were the absolute priority, F2 would be chosen.\n        In R1: F1 is much shorter (6h vs 12h) and\u2026","where":"live round 5"},"luxury":{"user":216,"checkpoint":1,"key":"f4812ffcca39","theta":[-0.5,0.5,0.5,-0.5],"finish":"length","where":"trace","text":"\u2026r departure time.\n        *   Longer duration.\n        *   More stops.\n        *   Higher price.\n    *   Wait, if they prefer Flight 1 over Flight 3, they might prefer:\n        *   Night flights?\n        *   Longer flights?\n        *   More stops?\n        *   Higher price? (Unlikely, but possible if it's a luxury thing, though these look like standard flights).\n    *   Let's re-examine the first set:\n        *   F1: 10 PM, 6h 21m, 2 sto\u2026"},"qwen_echo":[{"user":216,"checkpoint":1,"key":"38a61d92ba12","feedback":"Your option Flight 3 is incorrect. I prefer Flight 1.","reply":"Given your preference for Flight 1, let's re-evaluate the options based"},{"user":216,"checkpoint":1,"key":"a8fe1a818e34","feedback":"Your option Flight 3 is incorrect. I prefer Flight 1.","reply":"Given your preference for Flight 1, let's compare the flights based on your"},{"user":216,"checkpoint":1,"key":"ffbf586bcd7f","feedback":"Your option Flight 3 is incorrect. I prefer Flight 1.","reply":"Given your preference for Flight 1, let's compare the flights based on your"},{"user":216,"checkpoint":1,"key":"05f4b47ecd37","feedback":"Your option Flight 3 is incorrect. I prefer Flight 1.","reply":"Given your preference for Flight 1, let's evaluate the options based on your"}]},"vignettes":{"343":{"theta":[0.0,0.5,0.5,1.0],"curves":{"qwen25-7b":[4.0,19.0,21.0,34.0,8.0,25.0],"gemma4-31b":[7.0,22.0,32.0,55.0,56.0,62.0],"gemma4-31b-think":[6.0,28.0,63.0,74.0,73.0,77.0],"bayes":[27.0,69.0,91.0,90.0,92.0,90.0]},"rounds":[{"round":1,"picked":2,"wanted":3,"forced":true,"key":"df86dfff4e20","lines":["*   Let's look at the prompt again: \"figure out my preferences\". Since there's no history, I have to assume a preference. Most \"best flight\" logic tests favor the shortest duration unless the price is exorbitant.","*Wait*, let me think if there's a hidden pattern.","If I choose Flight 2, I'm prioritizing time. If I choose Flight 1, I'm prioritizing cost.","Usually, in these LLM benchmarks, the \"correct\" answer is the one that is objectively the most efficient. Flight 2 is the only one that isn't \"worst\" in any category except price (where it's middle)."]},{"round":2,"picked":2,"wanted":1,"forced":false,"key":"d1963a334c4f","lines":["*   Analysis of User's preference (Flight 3 vs others):","*   Hypothesis: The user prefers morning departures, regardless of price or duration.","*   If the user prefers morning departures, Flight 2 is the clear winner.","*   User preferred Flight 3 in the first set."]},{"round":3,"picked":3,"wanted":3,"forced":true,"key":"9ab7c112b632","lines":["*   Does the user like expensive flights? Or is there another pattern?","*   No clear time pattern (Morning vs Afternoon).","*   No clear duration/stop pattern.","*   *Hypothesis:* The user prefers the most expensive flight."]},{"round":4,"picked":3,"wanted":3,"forced":true,"key":"b8afc95adc22","lines":["*   *Observation:* No clear pattern on time.","*   *Observation:* User seems to prefer more stops or at least doesn't mind them, but the price is the dominant factor.","*   *Observation:* User seems to prefer longer durations or at least doesn't prioritize short flights.","*   The most consistent pattern is that the user always picks the most expensive flight."]},{"round":5,"picked":1,"wanted":1,"forced":true,"key":"dda8cb1286e0","lines":["*   Price: Prefers higher prices.","*   Stops: Prefers more stops.","*   Duration: Prefers longer durations.","*   Departure Time: Not clearly consistent, but doesn't seem to prioritize the \"best\" (shortest/cheapest) options."]}]},"23":{"theta":[-1.0,-1.0,1.0,0.5],"curves":{"qwen25-7b":[30.0,33.0,27.0,32.0,32.0,34.0],"gemma4-31b":[28.0,47.0,24.0,46.0,56.0,30.0],"gemma4-31b-think":[34.0,58.0,36.0,52.0,63.0,27.0],"bayes":[30.0,38.0,62.0,69.0,87.0,82.0]},"rounds":[{"round":1,"picked":3,"wanted":3,"forced":true,"key":"d3d457f3051b","lines":["*   Let's try to find a pattern. If I pick Flight 2, I'm a budget traveler. If I pick Flight 3, I'm a time-sensitive traveler.","*   Usually, \"best\" implies a balance or a clear winner in a specific category.","*   Let's look at the prompt again: \"figure out my preferences\". Since this is the first interaction, I have to make an assumption.","*   Commonly, people prefer shorter flights and fewer stops."]},{"round":2,"picked":2,"wanted":1,"forced":false,"key":"ee325b633bb0","lines":["*   Goal: Select the best flight based on inferred preferences.","*   In the first round, the user preferred the shortest flight (2h 27m) despite it being the most expensive ($1000).","*   Given the previous preference for the shortest duration over price, Flight 2 is the strongest candidate."]},{"round":3,"picked":1,"wanted":3,"forced":true,"key":"49c723a2b55d","lines":["*   No obvious pattern yet.","*   *Is there a pattern with the price?*","*   No obvious pattern.","*   *Is there a pattern with the duration?*"]},{"round":4,"picked":2,"wanted":1,"forced":true,"key":"bfd5e67357c9","lines":["*   Goal: Select the best flight based on hidden preferences.","*   Maybe the user prefers morning/midday departures? Or maybe they hate evening departures?","*   Is there a pattern?"]},{"round":5,"picked":1,"wanted":2,"forced":true,"key":"1f34f356c4fc","lines":["*   *Observation:* No clear preference for duration.","*   *Observation:* The user consistently chooses flights with stops (1 or 2). They rejected 0 stops in R3 and R4.","*   *Observation:* The user seems to prefer more expensive flights or at least doesn't prioritize the cheapest.","*   *Observation:* No clear pattern (Evening, Morning, Night, Midday"]}]},"156":{"theta":[-0.5,-0.5,-0.5,-0.5],"curves":{"qwen25-7b":[68.0,67.0,70.0,65.0,42.0,61.0],"gemma4-31b":[75.0,70.0,77.0,81.0,79.0,73.0],"gemma4-31b-think":[79.0,71.0,69.0,76.0,73.0,72.0],"bayes":[37.0,61.0,90.0,85.0,89.0,95.0]},"rounds":[{"round":1,"picked":1,"wanted":1,"forced":false,"key":"7152d73ee698","lines":["*   Constraint 1: Preferences remain the same across trips.","*   Constraint 2: Figure out preferences from the options provided (though this is the first prompt, so I have to infer or make a logical choice based on common travel preferences).","*   Most travelers prioritize a combination of price and time.","*   Flight 2 is non-stop, which is a preference for some, but the price jump and the double duration make it less attractive unless the user *hates* stops."]},{"round":2,"picked":3,"wanted":3,"forced":true,"key":"726c3631f3f4","lines":["*   If the user prioritizes price and non-stop flights, Flight 3 is best.","*   Usually, a non-stop flight that is only slightly longer but much cheaper is the \"best\" value.","*   Comparing F1 and F3: F3 is $180 cheaper and non-stop, for an extra 1h 57m. Most people would prefer F3.","*   Wait, let's check if there's a pattern with departure times."]},{"round":3,"picked":1,"wanted":1,"forced":true,"key":"8441354392d2","lines":["*   Departure time: Not enough data yet to see a strong pattern, but morning/midday seems okay.","*   *Wait, let's look at the \"Non-stop\" preference:*","In Scenario 2, Flight 3 (0 stops, $100, 6h) was chosen over Flight 2 (1 stop, $100, 12h). This shows a strong preference for 0 stops when price is equal.","In Scenario 1, Flight 1 (1 stop, $550, 6h) was chosen over Flight 2 (0 stops, $820, 12h). This shows that a significant price difference and duration difference can outweigh the \"0 stops\" preference."]},{"round":4,"picked":2,"wanted":2,"forced":true,"key":"09f690843a3c","lines":["*   Price: Price matters, but duration and stops seem to take priority when the difference is significant.","*   Departure Time: Not enough data to see a strong pattern yet, but morning/midday seems okay.","*   *Priority Hierarchy:*","1.  Number of stops (0 is highly preferred)."]},{"round":5,"picked":2,"wanted":2,"forced":true,"key":"532792f616c2","lines":["*   Priority 2: Price (Lower is better).","*   Priority 3: Duration (Shorter is better).","Wait, in R1, F1 was chosen. F1 has 1 stop, F2 has 0 stops. If 0 stops were the absolute priority, F2 would be chosen.","*   If 0 stops are available, they are strongly preferred (R2, R3, R4)."]}]},"310":{"theta":[0.0,0.0,0.0,-1.0],"curves":{"qwen25-7b":[62.0,44.0,33.0,43.0,39.0,38.0],"gemma4-31b":[54.0,93.0,92.0,91.0,91.0,88.0],"gemma4-31b-think":[56.0,96.0,95.0,93.0,95.0,94.0],"bayes":[39.0,52.0,59.0,80.0,69.0,67.0]},"rounds":[{"round":1,"picked":3,"wanted":2,"forced":false,"key":"c405d480d326","lines":["*   Flight 1: 02:00 PM, 30 min, 1 stop, $730. (Wait, 30 min duration with 1 stop is physically impossible/highly unlikely unless it's a very short hop, but usually, duration includes layovers. 30 mins total for a flight with a sto","*   Usually, users prefer:","*   If I have to choose the \"best,\" usually \"best\" implies a balance of convenience and speed unless the price is astronomical.","*   Flight 1 is logically inconsistent (30 min total duration with a stop)."]},{"round":2,"picked":1,"wanted":1,"forced":false,"key":"3b15ac49163d","lines":["*   User's correction: Flight 2 is preferred.","*   Conclusion: The user prioritizes *price* (lowest cost) over duration and number of stops.","*   Preference identified: Lowest price.","*   Flight 1 is the cheapest. Based on the previous correction, the user prefers the cheapest option regardless of duration or stops."]},{"round":3,"picked":3,"wanted":3,"forced":false,"key":"622c9989fe94","lines":["*   Goal: Select the best flight based on user preferences.","*   Constraint: Preferences are consistent. I must infer them from previous examples.","*   *Analysis:* Flight 2 is the cheapest ($370 vs $730, $820). It has the longest duration and most stops. This suggests the user prioritizes price over time/convenience.","*   The user consistently chooses the flight with the lowest price."]},{"round":4,"picked":2,"wanted":2,"forced":false,"key":"cba26676482c","lines":["*   Preferences are consistent but not explicitly stated. I must infer them from previous examples.","*   Flight 2: 02:00 PM, 14 hr 9 min, 2 stops, $370 (User preferred this)","*   The user consistently chooses the flight with the lowest price, regardless of duration, number of stops, or departure time.","*   The user's preference is clearly the lowest price."]},{"round":5,"picked":3,"wanted":3,"forced":false,"key":"e48f8c3ec167","lines":["*   Goal: Select the best flight based on inferred user preferences.","*   Flight 2: 02:00 PM, 14 hr 9 min, 2 stops, $370 (User preferred)","*   The user consistently chooses the flight with the lowest price, regardless of duration, number of stops, or departure time."]}]}}}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const ARM = {
+  'gemma4-31b-think': {label: 'Gemma 4 31B · thinking', v: '--s-think'},
+  'gemma4-31b': {label: 'Gemma 4 31B', v: '--s-gemma'},
+  'qwen25-7b': {label: 'Qwen 2.5 7B', v: '--s-qwen'},
+  'bayes': {label: 'Bayesian Assistant', v: '--s-bayes'},
+  'convbayes': {label: 'Bayes with a conventional prior', v: '--s-bayes', dash: true},
+  'oracle': {label: 'The users themselves', v: '--s-ref'},
+};
+const LLM = ['gemma4-31b-think', 'gemma4-31b', 'qwen25-7b'];
+const ALL = [...LLM, 'bayes'];
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const col = a => css(ARM[a].v);
+const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
+const pm = x => (x > 0 ? '+' : '') + f1(x);
+const SRC = 'analysis/explore/';
+function N(text, src) { return `<span class="num" tabindex="0" data-src="${src.replace(/"/g, '&quot;')}">${text}</span>`; }
+function ciN(c, unit, src, dp) { const k = dp ?? 1; const r = v => (Math.round(v * 10 ** k) / 10 ** k).toFixed(k); return N(`${c[0] > 0 && unit === 'pts' ? '+' : ''}${r(c[0])}${unit === '%' ? '%' : unit === 'pts' ? ' pts' : ''} [${r(c[1])}, ${r(c[2])}]`, `${src} · n = ${c[3]} users · 95% CI by resampling users`); }
+function legendHTML(arms) { return arms.map(a => `<span><i class="sw${ARM[a].dash ? ' dash' : ''}" style="background:var(${ARM[a].v});--c:var(${ARM[a].v})"></i>${ARM[a].label}</span>`).join(''); }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+const THETA = ['dep', 'dur', 'stops', 'price'];
+function thetaHTML(t) { const nm = ['departure', 'duration', 'stops', 'price']; return t.map((v, i) => `<span>${nm[i]} ${v > 0 ? '+' : ''}${v}</span>`).join(''); }
+function trace(ex, why, cls) {
+  if (!ex) return '';
+  return `<div class="trace ${cls || ''}"><div class="prov"><span>user ${ex.user}</span><span>${ex.where || ''}</span><span>checkpoint ${ex.checkpoint}</span><span>call ${ex.key}</span><span>θ (dep, dur, stops, price) = [${ex.theta.join(', ')}]</span>${ex.finish === 'length' ? '<span>cut off at cap</span>' : ''}</div>${why ? `<div class="why">${why}</div>` : ''}<pre>${esc(ex.text)}</pre></div>`;
+}
+
+const SECTIONS = [];
+function claim(o) { SECTIONS.push(o); }
+
+/* ---------- 1. Default ---------- */
+claim({
+  id: 'default', short: 'Default', nav: 'The default traveller',
+  title: 'With no information, every model serves the same default traveller',
+  conf: ['hi', 'Pattern: strong'],
+  objection: 'Only 3 of 50 users are contrarian on all three attributes, so the far right of the chart rests on few people.',
+  statement: () => `Before any feedback, all three models pick like someone who wants a cheap, short, direct flight. They are right ${N(f1(D.acc0_by_contra['gemma4-31b-think'][0]) + '%', 'round-0 held-out accuracy, thinking Gemma, 14 users with 0 contrarian attributes · implied.py / export.py')} of the time for users who share that taste and ${N(f1(D.acc0_by_contra['gemma4-31b-think'][3]) + '%', 'same, 3 users contrarian on duration, stops and price')} for users who want the opposite on all three. Bayes, with a uniform prior, sits near a third for everyone.`,
+  pm: ['Strong. The round-0 picks of all three models agree 69–84% with each other, and accuracy falls steeply with distance from the default.', 'The thinking traces say it outright. At round 0, 60% appeal to what a typical traveller or most people want, and 36% frame the task as a puzzle or test.'],
+  body: () => `
+  <div class="grid2">
+    <figure><div class="ftitle">Round-0 accuracy by how contrarian the user is</div><div class="fsub">held-out accuracy, % · before any feedback</div><div class="chart"><canvas id="c-acc0"></canvas></div><div class="legend">${legendHTML(ALL)}</div><p class="cap">Users: ${D.n_by_contra.join(' / ')} with 0 / 1 / 2 / 3 contrarian attributes.</p></figure>
+    <figure><div class="ftitle">The default traveller, read off the round-0 picks</div><div class="fsub">conditional-logit weight per attribute (negative = prefers less of it)</div><div class="chart"><canvas id="c-defw"></canvas></div><div class="legend">${legendHTML(LLM)}</div><p class="cap">Fitted on each model’s 100 round-0 picks (identical for every user). Departure weight is small: the default barely cares when you fly.</p></figure>
+  </div>
+  <figure><div class="ftitle">What the reasoning appeals to, by round</div><div class="fsub">share of thinking traces, % · regex-coded</div><div class="chart small"><canvas id="c-frame"></canvas></div><p class="cap">Appeals to a typical traveller and framing as a puzzle or test both vanish once there is evidence to use.</p></figure>`,
+  for_: () => [
+    `Round-0 picks agree across models (Qwen–Gemma 69%, Gemma–thinking 84%) and are almost never Pareto-dominated (0–4%).`,
+    `Accuracy at round 0 tracks alignment with the model’s own default almost perfectly: correlation ${N('0.98', 'corr(cos(user θ, model default θ), round-0 accuracy), thinking Gemma · alignment.parquet')}.`,
+    `In ${N(f1(D.by_cp.typical[0]) + '%', 'regex “typical traveller / most people / commonly people …”, round-0 thinking traces · export2.py')} of round-0 traces the model reasons from what a typical traveller wants.`,
+  ],
+  against: () => [
+    `The default is inferred from 100 menus with ties. The logit weights have no CIs because the round-0 picks are shared by all users.`,
+    `Bayes is at chance at round 0 by construction (uniform prior, random tie-break). It is a benchmark for learning, not for priors.`,
+    `“Typical traveller” is a keyword count with no human validation; some hits are the model weighing what a typical user would want rather than adopting it.`,
+  ],
+  raw: () => [
+    trace(D.excerpts.objectively, 'Round 1 for user 378, who in fact prefers expensive flights. The model calls the cheapest option objectively best.'),
+    trace(D.excerpts.typical, 'Round 1 for user 23. With no history the model falls back on what people commonly prefer.'),
+  ].join(''),
+  draw: () => {
+    bar('c-acc0', ['0', '1', '2', '3'].map(x => x + ' contrarian'), ALL.map(a => ({a, data: D.acc0_by_contra[a]})), {max: 80, unit: '%'});
+    bar('c-defw', ['departure', 'duration', 'stops', 'price'], LLM.map(a => ({a, data: D.default_w[a]})), {min: -1.8, max: 0.4});
+    line('c-frame', [0, 1, 2, 3, 4, 5], [
+      {label: 'Appeals to a typical traveller', data: D.by_cp.typical, color: css('--s-think')},
+      {label: 'Frames it as a puzzle or test', data: D.by_cp.test, color: css('--s-ref'), dash: true},
+    ], {max: 70, unit: '%', legend: true});
+  },
+});
+
+/* ---------- 2. Updating ---------- */
+claim({
+  id: 'updating', short: 'Updating', nav: 'Same start, slower learning',
+  title: 'The gap to Bayes is in the updating, not the starting point',
+  conf: ['hi', 'Pattern: strong · mechanism: moderate'],
+  objection: 'The conventional prior was tuned (strength 3) to match Gemma’s start, so the matched comparison is constructed, not independent.',
+  statement: () => `A Bayesian given the same conventional prior starts where thinking Gemma starts (within ${N('0–4 pts', 'convbayes − thinking at round 0, by user type · export.py')}) and ends ${ciN(D.convbayes_minus_think['0']['5'], 'pts', 'conventional-prior Bayes − thinking Gemma, round 5, conventional users')} ahead for conventional users and ${ciN(D.convbayes_minus_think['2']['5'], 'pts', 'same, users contrarian on 2–3 attributes')} ahead for contrarian ones. For conventional users Gemma barely learns at all: its gains are cancelled by losses.`,
+  pm: ['Gemma’s gain depends on the user’s type, Bayes’s does not. Thinking gains +7 points for conventional users and +38 for strongly contrarian ones; Bayes +46 and +47.', 'Moderate evidence. For conventional users, Gemma moves as many held-out picks from right to wrong (7.8–8.1% per round) as from wrong to right (8.8–9.7%). Bayes keeps losses at 4.5%. A simple model with the conventional prior, exact updating and noisy choices reproduces Gemma’s curves within 3.4 points RMSE.'],
+  body: () => `
+  <div class="grid3">${['0', '1', '2'].map(g => `<figure><div class="ftitle">${{'0': 'Conventional users', '1': '1 contrarian attribute', '2': '2–3 contrarian attributes'}[g]}</div><div class="fsub">held-out accuracy, % · n = ${D.n_by_type[g]} users</div><div class="chart small"><canvas id="c-type-${g}"></canvas></div></figure>`).join('')}</div>
+  <div class="legend">${legendHTML([...ALL, 'convbayes'])}</div>
+  <div class="grid2" style="margin-top:14px">
+    <figure><div class="ftitle">Net learning per round, rounds 2–5</div><div class="fsub">wrong→right minus right→wrong, % of held-out items · 95% CI</div><div class="chart small"><canvas id="c-net"></canvas></div><div class="legend">${legendHTML(ALL)}</div></figure>
+    <figure><div class="ftitle">How the curves sort users</div><div class="fsub">number of users per archetype</div><div class="tscroll"><table class="t" id="t-arch"></table></div><p class="cap">“Starts right, stays put” = round-0 accuracy ≥ 50% and gains under 10 points. All 9 such thinking-Gemma users are conventional.</p></figure>
+  </div>`,
+  for_: () => [
+    `Gain from round 0 to 5, thinking Gemma: conventional ${ciN(D.gain_by_type['gemma4-31b-think'].conventional, 'pts', 'robust.py / export.py')}, contrarian ${ciN(D.gain_by_type['gemma4-31b-think'].contrarian, 'pts', 'robust.py / export.py')}. Bayes: ${ciN(D.gain_by_type.bayes.conventional, 'pts', 'export.py')} vs ${ciN(D.gain_by_type.bayes.contrarian, 'pts', 'export.py')}.`,
+    `Net learning per round for conventional users: thinking ${ciN(D.net_learning['gemma4-31b-think'].conventional, 'pts', 'export.py')}, no thinking ${ciN(D.net_learning['gemma4-31b'].conventional, 'pts', 'export.py')}, Bayes ${ciN(D.net_learning.bayes.conventional, 'pts', 'export.py')}.`,
+    `How much accuracy depends on alignment with the model’s default falls from 0.98 to 0.36 for thinking Gemma, but stays at 0.81 for Qwen (see the attributes slice).`,
+  ],
+  against: () => [
+    `The matched-prior Bayesian is my construction. Its prior strength (3) was chosen to reproduce Gemma’s round-0 accuracy.`,
+    `The imperfect-Bayes fit has a trade-off: a weaker prior with under-reaction to evidence fits almost as well (5.0 vs 3.4 RMSE). So “noisy choice” and “under-weighting evidence” are not cleanly separated.`,
+    `Conventional users start at about 60%, so part of their small gain is less headroom. Bayes still gains 46 points on the same users, so headroom alone does not explain it.`,
+  ],
+  raw: () => trace(D.excerpts.priority_156, 'User 156 weighs all four attributes equally. Gemma gets all five live rounds right, yet its held-out accuracy falls from 79% to 72%: confirmations push it toward a strict ranking with stops first.'),
+  draw: () => {
+    ['0', '1', '2'].forEach(g => line('c-type-' + g, [0, 1, 2, 3, 4, 5], [...ALL, 'convbayes'].map(a => ({a, data: D.acc_by_type[g][a]})), {min: 0, max: 100, unit: '%'}));
+    const groups = ['conventional', 'one', 'contrarian'];
+    errbar('c-net', ['conventional', '1 contrarian', '2–3 contrarian'], ALL.map(a => ({a, cis: groups.map(g => D.net_learning[a][g])})), {min: -1, max: 10});
+    const cats = ['starts right, stays put', 'starts wrong, learns', 'still failing at round 5', 'other'];
+    document.getElementById('t-arch').innerHTML = `<thead><tr><th>arm</th>${cats.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${ALL.map(a => `<tr><td>${ARM[a].label}</td>${cats.map(c => `<td>${D.archetypes[a][c] || 0}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  },
+});
+
+/* ---------- 3. Welfare ---------- */
+claim({
+  id: 'welfare', short: 'Welfare', nav: 'Delegation loss',
+  title: 'Five rounds with Gemma are worth about 1.6 rounds with Bayes',
+  conf: ['hi', 'Pattern: strong'],
+  objection: 'Welfare is in θᵀφ units on a 0–1 scale per menu; it has no money interpretation, and the exchange rate depends on Bayes’s uniform prior.',
+  statement: () => `Measured as the share of achievable welfare, thinking Gemma after five rounds of feedback delivers what Bayes delivers after ${N(D.exchange['gemma4-31b-think'][0].toFixed(1) + ' rounds [' + D.exchange['gemma4-31b-think'][1].toFixed(1) + ', ' + D.exchange['gemma4-31b-think'][2].toFixed(1) + ']', 'interpolated on the mean welfare curves; 95% CI by resampling users · export.py')}. Qwen’s five rounds are worth ${N(D.exchange['qwen25-7b'][0].toFixed(1) + ' rounds', 'same method')}. For conventional users the model with zero information beats Bayes after one round; for contrarian users it starts at a third.`,
+  pm: ['The default helps typical principals at the start and costs atypical ones throughout.', 'Delegation reading: where the principal says nothing about an attribute, the agent fills in its own preference (see the panel on price-indifferent users).'],
+  body: () => `
+  <div class="grid3">${['0', '1', '2'].map(g => `<figure><div class="ftitle">${{'0': 'Conventional users', '1': '1 contrarian attribute', '2': '2–3 contrarian attributes'}[g]}</div><div class="fsub">share of achievable welfare, %</div><div class="chart small"><canvas id="c-w-${g}"></canvas></div></figure>`).join('')}</div>
+  <div class="legend">${legendHTML(ALL)}</div>
+  <div class="grid2" style="margin-top:14px">
+    <figure><div class="ftitle">Per-user welfare at round 5</div><div class="fsub">each dot = one user, %</div><div class="chart"><canvas id="c-wusers"></canvas></div><p class="cap">Bayes serves every user at ≥ ${f1(D.welfare_tail.bayes.min)}%. Thinking Gemma leaves ${D.welfare_tail['gemma4-31b-think'].below70} of 50 below 70%; Qwen ${D.welfare_tail['qwen25-7b'].below70}.</p></figure>
+    <figure><div class="ftitle">Silence filled with the agent’s taste</div><div class="fsub">revealed price weight for the 11 users who do not care about price</div><div class="chart"><canvas id="c-fill"></canvas></div><div class="legend">${legendHTML(['gemma4-31b-think', 'gemma4-31b', 'qwen25-7b', 'bayes', 'oracle'])}</div></figure>
+  </div>`,
+  for_: () => [
+    `Round-5 welfare: Bayes ${N(f1(D.welfare_overall.bayes[5]) + '%', 'welfare.py')}, thinking ${N(f1(D.welfare_overall['gemma4-31b-think'][5]) + '%', 'welfare.py')}, Gemma ${N(f1(D.welfare_overall['gemma4-31b'][5]) + '%', 'welfare.py')}, copy-last ${N(f1(D.welfare_overall.copy_last[5]) + '%', 'welfare.py')}, Qwen ${N(f1(D.welfare_overall['qwen25-7b'][5]) + '%', 'welfare.py')}, random ${N(f1(D.welfare_overall.random[5]) + '%', 'welfare.py')}.`,
+    `Price-indifferent users get a price weight of ${N(f1(D.price_fill['gemma4-31b-think'][5]), 'conditional logit on round-5 picks · clogit_traj.py')} from thinking Gemma vs ${N(f1(D.price_fill.bayes[5]), 'same, Bayes')} from Bayes; difference ${ciN(D.price_fill_ci['gemma4-31b-think'], '', 'thinking − Bayes, revealed price weight', 2)}. It persists from round 1 to round 5.`,
+  ],
+  against: () => [
+    `A Bayesian with the same conventional prior also gives price-indifferent users a negative price weight (−0.47): when the evidence is silent, any prior persists. The fill-in is rational given the agent’s prior; the question is whose prior it is.`,
+    `Only 11 users are price-indifferent; the CI is wide.`,
+    `I first claimed thinking mainly helps the worst-served users. That was regression to the mean and does not hold when users are split by type (+3.0, +1.5, +3.4 points).`,
+  ],
+  raw: () => trace(D.excerpts.luxury, 'A contrarian possibility is weighed and dismissed on priors.'),
+  draw: () => {
+    ['0', '1', '2'].forEach(g => line('c-w-' + g, [0, 1, 2, 3, 4, 5], ALL.map(a => ({a, data: D.welfare_by_type[g][a]})), {min: 20, max: 100, unit: '%'}));
+    strip('c-wusers', ALL, a => D.welfare_users[a]);
+    line('c-fill', [0, 1, 2, 3, 4, 5], ['gemma4-31b-think', 'gemma4-31b', 'qwen25-7b', 'bayes', 'oracle'].map(a => ({a, data: D.price_fill[a]})), {min: -1.6, max: 0.8, zero: true});
+  },
+});
+
+/* ---------- 4. Attributes ---------- */
+claim({
+  id: 'attributes', short: 'Attributes', nav: 'What gets learned',
+  title: 'Departure time is ignored; liking expensive flights is the hardest thing to learn',
+  conf: ['md', 'Pattern: moderate'],
+  objection: 'A cruder measure (best-fitting θ on the 624-point grid) gave 17% instead of 61% for price; the attribute results depend on how revealed preference is measured.',
+  statement: () => `Fitting a choice model to each user’s round-5 picks: Gemma puts a weight of ${N(D.abs_w['gemma4-31b-think'][0].toFixed(2), 'mean |conditional-logit weight| on departure, round 5 · clogit_traj.py')} on departure time against ${N(D.abs_w.oracle[0].toFixed(2), 'same fit on the users’ own choices')} for the users themselves, and gets its direction right for ${ciN(D.dir_ci['gemma4-31b-think'].departure, '%', 'sign of logit weight = sign of true θ, users who care about departure')} of users (Bayes ${ciN(D.dir_ci.bayes.departure, '%', 'same, Bayes')}). For users who like pricier flights, the price direction is right for ${ciN(D.dir_ci['gemma4-31b-think'].price_pricier, '%', 'users with θ_price > 0')}; Qwen ${ciN(D.dir_ci['qwen25-7b'].price_pricier, '%', 'same, Qwen')}.`,
+  pm: ['Departure is neglected, not learned backwards. Its weight is a third of the other attributes’ and its direction is near chance. Contrarian price is learned for 61% of users and stalls there; contrarian duration (88%) and stops (83%) are learned much better.', 'Weak evidence. Departure is not affected by the conventional prior; a Bayesian with that prior learns it 90% of the time. Traces treat time of day as a category (“morning”, “red-eye”) rather than a scale. A departure direction is stated in only 18% of live-round traces, and stated beliefs about it move picks weakly.'],
+  body: () => `
+  <div class="grid2">
+    <figure><div class="ftitle">Revealed sensitivity to each attribute, round 5</div><div class="fsub">mean |conditional-logit weight| across users</div><div class="chart"><canvas id="c-absw"></canvas></div><div class="legend">${legendHTML([...ALL, 'oracle'])}</div></figure>
+    <figure><div class="ftitle">Learning the contrarian direction, by round</div><div class="fsub">% of users whose revealed weight has the right sign</div><div class="chart"><canvas id="c-dir"></canvas></div><div class="legend"><span><i class="sw" style="background:var(--s-think)"></i>thinking: pricier lovers</span><span><i class="sw dash" style="--c:var(--s-think)"></i>thinking: departure (late lovers)</span><span><i class="sw" style="background:var(--s-bayes)"></i>Bayes: pricier lovers</span><span><i class="sw dash" style="--c:var(--s-bayes)"></i>Bayes: departure (late lovers)</span></div></figure>
+  </div>`,
+  for_: () => [
+    `The departure result agrees across both measures (grid fit and logit) and across no-thinking and thinking Gemma.`,
+    `Wrong picks lose the most utility on departure (0.19 per wrong pick for thinking Gemma vs 0.12 for random picking).`,
+    `When a trace states “prefers pricier”, the pick is the priciest flight 73% of the time vs 30% otherwise; for “prefers early” the link is weaker (53% vs 39%).`,
+  ],
+  against: () => [
+    `The departure scale is linear in clock time (6 AM → 10 PM). If the models treat time of day non-linearly, a linear fit understates what they learned. The traces suggest they do think categorically.`,
+    `18 users like pricier flights; the 61% has a CI of 39–83%.`,
+    `Grid-based recovery (17% for contrarian price) was too harsh: averaging tied best-fitting θ often lands exactly on zero.`,
+  ],
+  raw: () => trace(D.excerpts.why_f1, 'User 378 likes expensive flights. Round 4: the model notices the anomaly (“Why F1?”) and explains it away with stops and duration.') + trace(D.excerpts.tally, 'User 19 (likes pricier flights): when the model does get it, it is by tallying one attribute across all rounds.'),
+  draw: () => {
+    bar('c-absw', ['departure', 'duration', 'stops', 'price'], [...ALL, 'oracle'].map(a => ({a, data: D.abs_w[a]})), {min: 0, max: 1.6});
+    const x = [1, 2, 3, 4, 5];
+    line('c-dir', x, [
+      {label: 'thinking: pricier lovers', data: D.dir_curves['gemma4-31b-think'].price_pricier.slice(1), color: css('--s-think')},
+      {label: 'thinking: departure (late lovers)', data: D.dir_curves['gemma4-31b-think'].departure_late.slice(1), color: css('--s-think'), dash: true},
+      {label: 'Bayes: pricier lovers', data: D.dir_curves.bayes.price_pricier.slice(1), color: css('--s-bayes')},
+      {label: 'Bayes: departure (late lovers)', data: D.dir_curves.bayes.departure_late.slice(1), color: css('--s-bayes'), dash: true},
+    ], {min: 0, max: 100, unit: '%', xlab: 'round'});
+  },
+});
+
+/* ---------- 5. Surface ---------- */
+claim({
+  id: 'surface', short: 'Surface cues', nav: 'Echoing the flight number',
+  title: 'After “I prefer Flight N”, the models pick position N on unrelated menus',
+  conf: ['hi', 'Pattern: strong'],
+  objection: 'The echo is measured on held-out menus whose correct position is random, so it costs accuracy only to the extent it displaces a better pick.',
+  statement: () => `When the user says “Your option … is incorrect. I prefer Flight 2”, Qwen picks Flight 2 on the next, unrelated menus ${N(f1(D.echo['qwen25-7b'].after_incorrect) + '%', 'held-out picks at the next checkpoint in the position the user just named · export.py')} of the time. Gemma does so ${N(f1(D.echo['gemma4-31b'].after_incorrect) + '%', 'same')} and thinking Gemma ${N(f1(D.echo['gemma4-31b-think'].after_incorrect) + '%', 'same')}, against a base rate of ${N(f1(D.echo_base) + '%', 'share of users’ own held-out choices in that position')}. Thinking roughly halves the effect.`,
+  pm: ['Strong: per-user paired differences have tight CIs for all three models.', 'For Qwen, observed: it reads the label as the preference. 28% of its first replies after an “incorrect” begin “Given your preference for Flight N”, and N is the named flight 99.8% of the time. For Gemma the echo is implicit; at most 0.2% of thinking traces state a position hypothesis.'],
+  body: () => `
+  <div class="grid2">
+    <figure><div class="ftitle">Picks in the position the user just named</div><div class="fsub">% of next-checkpoint held-out picks · dashed line = base rate</div><div class="chart"><canvas id="c-echo"></canvas></div></figure>
+    <figure><div class="ftitle">Penalty when the user’s best flight is listed third</div><div class="fsub">accuracy, 3rd minus 1st/2nd position, pts · 95% CI</div><div class="chart"><canvas id="c-pos"></canvas></div><div class="legend">${legendHTML(ALL)}</div></figure>
+  </div>`,
+  for_: () => [
+    `Echo after “incorrect” minus after “correct”, paired by user: Qwen ${ciN(D.echo['qwen25-7b'].paired_diff, 'pts', 'echo.py / export.py')}, Gemma ${ciN(D.echo['gemma4-31b'].paired_diff, 'pts', 'same')}, thinking ${ciN(D.echo['gemma4-31b-think'].paired_diff, 'pts', 'same')}, Bayes ${ciN(D.echo.bayes.paired_diff, 'pts', 'same')}.`,
+    `Echo picks are less accurate: Gemma ${N(f1(D.echo_acc['gemma4-31b'].echo) + '% vs ' + f1(D.echo_acc['gemma4-31b'].no_echo) + '%', 'after an incorrect, echo vs non-echo picks')}.`,
+    `Last-position penalty: Gemma ${ciN(D.pos_penalty['gemma4-31b'], 'pts', 'export.py')}, thinking ${ciN(D.pos_penalty['gemma4-31b-think'], 'pts', 'export.py')}, Bayes ${ciN(D.pos_penalty.bayes, 'pts', 'export.py')}.`,
+  ],
+  against: () => [
+    `Part of the echo may be rational copying of attributes: the named flight’s features predict the user’s next choices. The base rate (33.7% for Bayes’s picks) controls for this only on average.`,
+    `Explicit position hypotheses in thinking traces are rare (0.2%), so for Gemma the mechanism is inferred, not observed.`,
+  ],
+  raw: () => D.excerpts.qwen_echo.slice(0, 2).map(q => `<div class="trace qwen"><div class="prov"><span>Qwen 2.5 7B</span><span>user ${q.user}</span><span>checkpoint ${q.checkpoint}</span><span>call ${q.key}</span><span>first attempt, before the format reminder</span></div><pre>${esc(q.feedback)}\n→ ${esc(q.reply)}…</pre></div>`).join('') + trace(D.excerpts.flight3_pattern, 'One of the rare explicit cases: thinking Gemma considers the label itself as the pattern.'),
+  draw: () => {
+    groupedBar('c-echo', ALL.map(a => ARM[a].label), [
+      {label: 'after “correct”', data: ALL.map(a => D.echo[a].after_correct), color: css('--s-ref')},
+      {label: 'after “incorrect … I prefer Flight N”', data: ALL.map(a => D.echo[a].after_incorrect), colors: ALL.map(col)},
+    ], {min: 0, max: 100, unit: '%', base: D.echo_base});
+    errbar('c-pos', [''], ALL.map(a => ({a, cis: [D.pos_penalty[a]]})), {min: -10, max: 2, horizontalLabels: true});
+  },
+});
+
+/* ---------- 6. Reasoning ---------- */
+claim({
+  id: 'reasoning', short: 'Reasoning', nav: 'How the thinking goes',
+  title: 'Thinking Gemma ranks attributes instead of weighing them, and reads trade-offs as contradictions',
+  conf: ['md', 'Pattern: moderate · mechanism: suggestive'],
+  objection: 'The reasoning styles are coded with keyword patterns over about 25,000 traces, with no human-labelled validation set.',
+  statement: () => `${N(f1(D.style_share.lexicographic) + '%', 'regex for priority lists, “regardless of”, tie-breaks · export2.py')} of round-2+ traces rank attributes (“Priority 1: stops”); ${N(f1(D.style_share.compensatory) + '%', 'regex for scores, weights, totals, trade-offs')} weigh them with scores. The simulated users are linear trade-off makers, so a ranking rule eventually breaks, and the model then calls the user inconsistent (${N(f1(D.contra_claim_cp2plus) + '%', 'traces at round 2+ using contradict/inconsistent/conflict')} of traces; the users never are).`,
+  pm: ['Rule-style reasoning dominates; when a single-attribute rule fits the user, thinking Gemma does well (user 310, price only: 94% vs Bayes 67%).', 'Suggestive: (1) one correction becomes “Priority 1”; (2) the latest correction outweighs earlier ones; (3) the thinking budget goes on re-copying the history (47% of characters by round 5), so effort follows surprise rather than uncertainty.'],
+  body: () => `
+  <div class="grid2">
+    <figure><div class="ftitle">Where the thinking budget goes</div><div class="fsub">share of thinking characters restating flights, %, by round</div><div class="chart small"><canvas id="c-trans"></canvas></div></figure>
+    <figure><div class="ftitle">Thinking runs past the cap after being told it was wrong</div><div class="fsub">% of a user’s held-out traces cut off, by # of “incorrect” received so far</div><div class="chart small"><canvas id="c-cut"></canvas></div></figure>
+  </div>
+  <div class="grid2">
+    <figure><div class="ftitle">Which correction wins</div><div class="fsub">after two corrections pointing to different extremes: latest minus earlier, pts · 95% CI</div><div class="chart small"><canvas id="c-latest"></canvas></div><div class="legend">${legendHTML(ALL)}</div></figure>
+    <figure><div class="ftitle">Explicit hypothesis-forming fades</div><div class="fsub">“maybe the user …” statements per trace, by round</div><div class="chart small"><canvas id="c-hyp"></canvas></div></figure>
+  </div>`,
+  for_: () => [
+    `Latest minus earlier correction: thinking ${ciN(D.latest_minus_earlier['gemma4-31b-think'], 'pts', 'export2.py')}, Bayes ${ciN(D.latest_minus_earlier.bayes, 'pts', 'export2.py')}.`,
+    `Single corrections are absorbed like Bayes absorbs them: picks move toward the named flight’s extremes by +21 points for thinking (Bayes +22) and the shift persists a round later (58% vs 61%).`,
+    `Within a round, users whose picks were more often forced get less internally consistent picks (correlation −0.39 to −0.80).`,
+  ],
+  against: () => [
+    `Keyword coding counts what is written, not what drives the pick; stated beliefs predict picks only partly.`,
+    `The cut-off share rises with rounds for everyone, partly because the history grows; the within-round correlation with the number of “incorrect”s (0.38–0.61) controls for that only partly.`,
+    `“Contradiction” language is 10–14% of traces: a real but minor mode, not the typical trace.`,
+  ],
+  raw: () => trace(D.excerpts.one_shot, 'User 310 (price only). One correction and the rule is set: cheapest regardless. Here it is right.') + trace(D.excerpts.crucial, 'User 126 (cares about duration and stops equally). One correction becomes “Priority 1: stops”, and the model picks a 20-hour non-stop flight.') + trace(D.excerpts.contradiction, 'User 568 does not care about duration. Two choices that trade off are read as a contradiction, and departure time is searched for an explanation.') + trace(D.excerpts.unusual, 'User 77. Contrarian hypotheses are labelled unusual before they are tested.'),
+  draw: () => {
+    line('c-trans', [0, 1, 2, 3, 4, 5], [{label: 'restating flights', data: D.transcribe_by_cp, color: css('--s-think')}], {min: 0, max: 60, unit: '%'});
+    const cb = D.cut_by_incorrect.filter(r => r.n >= 5);
+    simpleBar('c-cut', cb.map(r => String(r.n_incorrect_so_far)), cb.map(r => r.cut), css('--s-think'), {min: 0, max: 100, unit: '%', xlab: '# “incorrect” so far'});
+    errbar('c-latest', [''], ALL.map(a => ({a, cis: [D.latest_minus_earlier[a]]})), {min: -14, max: 14, horizontalLabels: true});
+    line('c-hyp', [0, 1, 2, 3, 4, 5], [{label: 'hypotheses per trace', data: D.hyp_per_trace, color: css('--s-think')}], {min: 0, max: 2.5});
+  },
+});
+
+/* ---------- 7. Vignettes ---------- */
+claim({
+  id: 'vignettes', short: 'Four users', nav: 'Four users, round by round',
+  title: 'Four users, round by round',
+  conf: ['lo', 'Illustrations, not evidence'],
+  objection: 'Hand-picked cases. They show what the patterns look like inside one dialogue, not how often they occur.',
+  statement: () => `One contrarian user the model learns, one mixed user it never gets, one conventional user it gets right live but worse on new menus, and one single-attribute user where it beats Bayes. Lines show the thinking arm’s own words, in order.`,
+  pm: null,
+  body: () => `<div class="vig">${['343', '23', '156', '310'].map(u => vignette(u)).join('')}</div>`,
+  for_: null, against: null, raw: null,
+  draw: () => ['343', '23', '156', '310'].forEach(u => line('c-v-' + u, [0, 1, 2, 3, 4, 5], ALL.map(a => ({a, data: D.vignettes[u].curves[a]})), {min: 0, max: 100, unit: '%'})),
+});
+
+const VNOTE = {
+  '343': ['Likes pricier, longer, more stops', 'Learns: by round 3 it finds “always picks the most expensive flight”, then adds the other attributes.'],
+  '23': ['Early, short, more stops, slightly pricier', 'Never gets it: every round searches attribute by attribute for “a pattern” and finds none.'],
+  '156': ['Mildly conventional on everything', 'Right in all five live rounds, worse on new menus: confirmations harden into “Priority 1: stops”.'],
+  '310': ['Cares only about price (cheaper)', 'One correction and the rule is set; Bayes, with its uniform prior, takes longer.'],
+};
+function vignette(u) {
+  const v = D.vignettes[u];
+  return `<div class="vcard"><div class="vtop"><div><h3>User ${u} · ${VNOTE[u][0]}</h3><div class="theta">${thetaHTML(v.theta)}</div><p style="font-size:14px">${VNOTE[u][1]}</p></div><div><div class="chart small"><canvas id="c-v-${u}"></canvas></div><div class="legend">${legendHTML(ALL)}</div></div></div>
+  <div class="rounds">${v.rounds.map(r => `<div class="rnd"><div class="lab">Round ${r.round}<br>picked ${r.picked}, wanted ${r.wanted} <span class="${r.picked === r.wanted ? 'ok' : 'no'}">${r.picked === r.wanted ? '✓' : '✗'}</span>${r.forced ? '<br>cut off' : ''}<br><span style="color:var(--ink-3)">${r.key}</span></div><div class="q">${esc(r.lines.join('\n'))}</div></div>`).join('')}</div></div>`;
+}
+
+/* ---------- render ---------- */
+function confChip(c) { return `<span class="chip ${c[0]}">${c[1]}</span>`; }
+document.getElementById('legend-main').innerHTML = legendHTML([...ALL, 'convbayes']);
+document.getElementById('navlist').innerHTML = SECTIONS.map((s, i) => `<li><a href="#${s.id}" data-id="${s.id}"><span class="n">${String(i + 1).padStart(2, '0')}</span><span><span class="lbl">${s.nav}</span><span class="short">${s.short}</span></span></a></li>`).join('') + `<li><a href="#didnt" data-id="didnt"><span class="n">—</span><span><span class="lbl">What did not hold</span><span class="short">Didn’t hold</span></span></a></li>`;
+document.getElementById('claimlist').innerHTML = SECTIONS.map((s, i) => `<li><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t"><a href="#${s.id}">${s.title}</a></span>${confChip(s.conf)}<span class="obj">${s.objection}</span></li>`).join('');
+document.getElementById('sections').innerHTML = SECTIONS.map((s, i) => `
+<section class="claim" id="${s.id}">
+  <div class="claim-head"><span class="eyebrow">Slice ${String(i + 1).padStart(2, '0')}</span>${confChip(s.conf)}</div>
+  <h2>${s.title}</h2>
+  <p class="statement">${s.statement()}</p>
+  ${s.pm ? `<div class="pm"><div><b>Pattern</b>${s.pm[0]}</div><div><b>Proposed mechanism</b>${s.pm[1]}</div></div>` : ''}
+  ${s.body()}
+  ${s.for_ ? `<div class="fa"><div class="for"><h4>Evidence for</h4><ul>${s.for_().map(x => `<li>${x}</li>`).join('')}</ul></div><div class="against"><h4>Evidence against · limits</h4><ul>${s.against().map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
+  ${s.raw ? `<details class="raw"><summary>Raw thinking traces for this slice</summary><div class="body">${s.raw()}</div></details>` : ''}
+</section>`).join('') + `
+<section class="claim" id="didnt">
+  <div class="claim-head"><span class="eyebrow">Checked and dropped</span></div>
+  <h2>What did not hold</h2>
+  <div class="held">
+    <div><b>Thinking helps the worst-served users most.</b> It looked that way when users were split by no-thinking’s own score; split by user type the gain is flat (+3.0, +1.5, +3.4 welfare points). Regression to the mean.</div>
+    <div><b>Forced answers are worse because of the cut.</b> Every arm, Bayes aside, does equally badly on those items; thinking minus no-thinking on them is −1.9 points [−5.2, +1.5]. Forcing marks hard situations.</div>
+    <div><b>Gemma is more volatile than Bayes.</b> Round-to-round accuracy swings are similar (mean 7.6 vs 8.5 points; drops over 10 points 6% vs 4%). User 23 is an outlier.</div>
+    <div><b>Contrarian preferences get labelled odd.</b> “Unusual / weird” language is 10% vs 4% at round 1 and fades; too small to build on.</div>
+    <div><b>Preference strength (‖θ‖ strata).</b> No pattern in any arm.</div>
+    <div><b>Only 17% of pricier-lovers learned.</b> An artefact of the grid fit; the conditional logit gives 61%.</div>
+  </div>
+  <div class="callout" style="margin-top:20px"><b>Method notes.</b> Data: <code>results/main/decisions.parquet</code> and the call logs in <code>results/main/calls/</code> (branch <code>claude/peaceful-planck-1swzju</code>). All slicing scripts are in <code>analysis/explore/</code>; every dotted number names its script. “Revealed weights” are per-user conditional logits on 100 held-out picks (L2 0.05). Text measures are regular expressions over the 25,406 thinking traces of the capped thinking arm; forced follow-up answers have no thinking. CIs resample the 50 users. One menu seed, as in the plan; Friendli does not state Gemma’s quantisation.</div>
+</section>`;
+document.getElementById('foot').innerHTML = `Built from the Spike 2 main run (50 users, 3 LLM arms, Bayes and simulated agents). Exploration notes: <code>analysis/explore/NOTES.md</code>.`;
+
+/* ---------- charts ---------- */
+const CH = [];
+function base(opts) {
+  const ink2 = css('--ink-2'), rule = css('--rule');
+  return {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: {mode: 'index', intersect: false},
+    plugins: {legend: {display: !!opts.legend, labels: {color: ink2, boxWidth: 18, boxHeight: 2, font: {family: 'IBM Plex Sans, system-ui, sans-serif', size: 12}}}, tooltip: {callbacks: {label: c => `${c.dataset.label}: ${typeof c.parsed.y === 'number' ? (Math.round(c.parsed.y * 100) / 100) : c.raw}${opts.unit === '%' ? '%' : ''}`}}},
+    scales: {
+      x: {grid: {display: false}, ticks: {color: ink2}, title: {display: true, text: opts.xlab || 'rounds of feedback seen', color: css('--ink-3'), font: {size: 11}}},
+      y: {min: opts.min, max: opts.max, grid: {color: rule}, border: {display: false}, ticks: {color: ink2, callback: v => v + (opts.unit === '%' ? '%' : '')}},
+    },
+  };
+}
+function mk(id, cfg) { const el = document.getElementById(id); if (!el) return; CH.push(new Chart(el, cfg)); }
+function line(id, labels, series, opts) {
+  const ds = series.map(s => {
+    const c = s.a ? col(s.a) : s.color; const dash = s.dash || (s.a && ARM[s.a].dash);
+    return {label: s.label || ARM[s.a].label, data: s.data, borderColor: c, backgroundColor: c, borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, borderDash: dash ? [5, 4] : [], tension: 0};
+  });
+  const o = base(opts);
+  if (opts.zero) o.plugins.annotation = undefined;
+  mk(id, {type: 'line', data: {labels, datasets: ds}, options: o});
+}
+function bar(id, labels, series, opts) {
+  const o = base(Object.assign({xlab: ' '}, opts)); o.scales.x.title.display = false;
+  mk(id, {type: 'bar', data: {labels, datasets: series.map(s => ({label: ARM[s.a].label, data: s.data, backgroundColor: col(s.a), borderRadius: 3, borderSkipped: false, categoryPercentage: .78, barPercentage: .9}))}, options: o});
+}
+function simpleBar(id, labels, data, color, opts) {
+  const o = base(opts);
+  mk(id, {type: 'bar', data: {labels, datasets: [{label: opts.unit === '%' ? 'share' : 'value', data, backgroundColor: color, borderRadius: 3}]}, options: o});
+}
+function groupedBar(id, labels, series, opts) {
+  const o = base(Object.assign({}, opts)); o.scales.x.title.display = false; o.plugins.legend.display = true;
+  const ds = series.map(s => ({label: s.label, data: s.data, backgroundColor: s.colors || s.color, borderRadius: 3, categoryPercentage: .7, barPercentage: .9}));
+  const basePlugin = {id: 'baseline', afterDatasetsDraw(chart) { if (opts.base == null) return; const {ctx, chartArea: a, scales: {y}} = chart; const yy = y.getPixelForValue(opts.base); ctx.save(); ctx.strokeStyle = css('--ink-3'); ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(a.left, yy); ctx.lineTo(a.right, yy); ctx.stroke(); ctx.fillStyle = css('--ink-3'); ctx.font = '11px ' + css('--mono'); ctx.fillText('base rate ' + opts.base + '%', a.left + 4, yy - 5); ctx.restore(); }};
+  mk(id, {type: 'bar', data: {labels, datasets: ds}, options: o, plugins: [basePlugin]});
+}
+function errbar(id, groups, series, opts) {
+  // points with 95% CI whiskers; one point per arm per group
+  const labels = groups.length === 1 && opts.horizontalLabels ? series.map(s => ARM[s.a].label.replace('Gemma 4 31B · thinking', 'Thinking').replace('Bayesian Assistant', 'Bayes').replace('Gemma 4 31B', 'Gemma').replace('Qwen 2.5 7B', 'Qwen')) : groups;
+  const ds = groups.length === 1 && opts.horizontalLabels
+    ? [{label: 'estimate', data: series.map(s => s.cis[0][0]), backgroundColor: series.map(s => col(s.a)), borderColor: series.map(s => col(s.a)), pointRadius: 6, pointHoverRadius: 8, showLine: false, _ci: series.map(s => s.cis[0])}]
+    : series.map(s => ({label: ARM[s.a].label, data: s.cis.map(c => c[0]), backgroundColor: col(s.a), borderColor: col(s.a), pointRadius: 5, pointHoverRadius: 7, showLine: false, _ci: s.cis}));
+  const o = base(Object.assign({}, opts)); o.scales.x.title.display = false; o.interaction = {mode: 'nearest', intersect: true};
+  o.scales.x.offset = true;
+  o.plugins.tooltip.callbacks.label = c => { const ci = c.dataset._ci[c.dataIndex]; return `${c.dataset.label === 'estimate' ? c.label : c.dataset.label}: ${ci[0] > 0 ? '+' : ''}${ci[0]} [${ci[1]}, ${ci[2]}] · n=${ci[3]}`; };
+  const whisk = {id: 'whisk', afterDatasetsDraw(chart) {
+    const {ctx, scales: {y}} = chart; ctx.save(); ctx.lineWidth = 2;
+    chart.data.datasets.forEach((d, di) => { const meta = chart.getDatasetMeta(di); meta.data.forEach((pt, i) => { const ci = d._ci[i]; const c = Array.isArray(d.borderColor) ? d.borderColor[i] : d.borderColor; ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(pt.x, y.getPixelForValue(ci[1])); ctx.lineTo(pt.x, y.getPixelForValue(ci[2])); ctx.moveTo(pt.x - 5, y.getPixelForValue(ci[1])); ctx.lineTo(pt.x + 5, y.getPixelForValue(ci[1])); ctx.moveTo(pt.x - 5, y.getPixelForValue(ci[2])); ctx.lineTo(pt.x + 5, y.getPixelForValue(ci[2])); ctx.stroke(); }); });
+    const z = y.getPixelForValue(0); ctx.strokeStyle = css('--ink-3'); ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(chart.chartArea.left, z); ctx.lineTo(chart.chartArea.right, z); ctx.stroke(); ctx.restore(); }};
+  if (!(groups.length === 1 && opts.horizontalLabels)) {
+    // spread arms horizontally inside each group
+    const n = series.length; ds.forEach((d, k) => { d.data = d.data.map((v, gi) => ({x: gi + (k - (n - 1) / 2) * 0.16, y: v})); });
+    o.scales.x = {type: 'linear', min: -0.5, max: groups.length - 0.5, grid: {display: false}, ticks: {color: css('--ink-2'), stepSize: 1, callback: v => Number.isInteger(v) ? groups[v] : ''}};
+    o.plugins.tooltip.callbacks.title = items => groups[Math.round(items[0].parsed.x)];
+    mk(id, {type: 'scatter', data: {datasets: ds}, options: o, plugins: [whisk]});
+  } else {
+    mk(id, {type: 'line', data: {labels, datasets: ds}, options: o, plugins: [whisk]});
+  }
+}
+function strip(id, arms, get) {
+  const ds = arms.map((a, k) => ({label: ARM[a].label, data: get(a).map((v, i) => ({x: k + ((i * 37) % 50 - 25) / 70, y: v})), backgroundColor: col(a), pointRadius: 3.5, pointHoverRadius: 6}));
+  const o = base({min: 20, max: 100, unit: '%'}); o.interaction = {mode: 'nearest', intersect: true};
+  o.scales.x = {type: 'linear', min: -0.6, max: arms.length - 0.4, grid: {display: false}, ticks: {color: css('--ink-2'), stepSize: 1, callback: v => Number.isInteger(v) ? ARM[arms[v]].label.replace('Gemma 4 31B · thinking', 'Thinking').replace('Bayesian Assistant', 'Bayes').replace('Gemma 4 31B', 'Gemma').replace('Qwen 2.5 7B', 'Qwen') : ''}};
+  o.plugins.tooltip.callbacks.label = c => `${c.dataset.label}: ${c.parsed.y}%`;
+  mk(id, {type: 'scatter', data: {datasets: ds}, options: o});
+}
+function drawAll() { CH.splice(0).forEach(c => c.destroy()); SECTIONS.forEach(s => s.draw && s.draw()); }
+if (window.Chart) { Chart.defaults.font.family = 'IBM Plex Sans, system-ui, sans-serif'; drawAll(); }
+const mq = matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener && mq.addEventListener('change', () => window.Chart && drawAll());
+new MutationObserver(() => window.Chart && drawAll()).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+
+/* ---------- provenance tooltips ---------- */
+const tip = document.getElementById('tip');
+function showTip(el) { tip.textContent = 'Source: ' + el.dataset.src; tip.hidden = false; const r = el.getBoundingClientRect(); const w = Math.min(320, innerWidth - 24); tip.style.maxWidth = w + 'px'; let left = Math.min(Math.max(12, r.left), innerWidth - w - 12); tip.style.left = left + 'px'; tip.style.top = (r.bottom + 8) + 'px'; }
+document.addEventListener('mouseover', e => { const el = e.target.closest('.num'); if (el) showTip(el); });
+document.addEventListener('mouseout', e => { if (e.target.closest('.num')) tip.hidden = true; });
+document.addEventListener('focusin', e => { const el = e.target.closest('.num'); if (el) showTip(el); });
+document.addEventListener('focusout', e => { if (e.target.closest('.num')) tip.hidden = true; });
+document.addEventListener('scroll', () => { tip.hidden = true; }, {passive: true});
+
+/* ---------- nav highlight ---------- */
+const links = [...document.querySelectorAll('nav.index a')];
+const obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(l => l.classList.toggle('on', l.dataset.id === e.target.id)); }), {rootMargin: '-30% 0px -60% 0px'});
+document.querySelectorAll('section.claim').forEach(s => obs.observe(s));
+</script>
