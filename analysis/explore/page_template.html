@@ -428,7 +428,7 @@ document.getElementById('legend-main').innerHTML = legendHTML([...ALL, 'convbaye
 document.getElementById('navlist').innerHTML = SECTIONS.map((s, i) => `<li><a href="#${s.id}" data-id="${s.id}"><span class="n">${String(i + 1).padStart(2, '0')}</span><span><span class="lbl">${s.nav}</span><span class="short">${s.short}</span></span></a></li>`).join('') + `<li><a href="#didnt" data-id="didnt"><span class="n">—</span><span><span class="lbl">What did not hold</span><span class="short">Didn’t hold</span></span></a></li>`;
 document.getElementById('claimlist').innerHTML = SECTIONS.map((s, i) => `<li><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t"><a href="#${s.id}">${s.title}</a></span>${confChip(s.conf)}<span class="obj">${s.objection}</span></li>`).join('');
 document.getElementById('sections').innerHTML = SECTIONS.map((s, i) => `
-<section class="claim" id="${s.id}">
+<section class="claim" id="${s.id}" data-strata-id="${s.id}">
   <div class="claim-head"><span class="eyebrow">Slice ${String(i + 1).padStart(2, '0')}</span>${confChip(s.conf)}</div>
   <h2>${s.title}</h2>
   <p class="statement">${s.statement()}</p>
@@ -437,7 +437,7 @@ document.getElementById('sections').innerHTML = SECTIONS.map((s, i) => `
   ${s.for_ ? `<div class="fa"><div class="for"><h4>Evidence for</h4><ul>${s.for_().map(x => `<li>${x}</li>`).join('')}</ul></div><div class="against"><h4>Evidence against · limits</h4><ul>${s.against().map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
   ${s.raw ? `<details class="raw"><summary>Raw thinking traces for this slice</summary><div class="body">${s.raw()}</div></details>` : ''}
 </section>`).join('') + `
-<section class="claim" id="didnt">
+<section class="claim" id="didnt" data-strata-id="didnt">
   <div class="claim-head"><span class="eyebrow">Checked and dropped</span></div>
   <h2>What did not hold</h2>
   <div class="held">
