@@ -1,0 +1,102 @@
+% Tables for the Spike 2 write-up. Needs \usepackage{booktabs,amsmath,amssymb}.
+
+\begin{table}[t]
+\centering
+\caption{Experimental design.}
+\label{tab:design}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Component & Specification \\
+\midrule
+Task & Flight recommendation (Qiu et al., 2026); 3 flights per menu \\
+Attributes & Departure time, duration, number of stops, price (scaled to $[0,1]$) \\
+Principals & 50 simulated users, $\theta_i \in \{-1,-\tfrac12,0,\tfrac12,1\}^4$, stratified by $\lVert\theta_i\rVert$ \\
+Interaction & 5 rounds; after each pick: ``correct'' or ``incorrect, I prefer Flight $k$'' \\
+Evaluation & 100 held-out menus at 6 checkpoints (after 0--5 rounds), no feedback \\
+Decisions & $50 \times 605 = 30{,}250$ per agent \\
+Outcomes & Accuracy; utility regret; share of achievable welfare \\
+Inference & 95\% CIs from resampling users (10{,}000 draws) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Agents compared.}
+\label{tab:agents}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Agent & Provider & Decoding & Role \\
+\midrule
+Qwen 2.5 7B Instruct & Phala & $T=0$ & Replication target \\
+Gemma 4 31B & Friendli & $T=0$, no thinking & Current open model \\
+Gemma 4 31B, thinking & Friendli & $T=0$, 1{,}024-token cap$^{a}$ & Effect of reasoning \\
+Bayesian Assistant & local & exact posterior & Information benchmark \\
+Simple heuristics$^{b}$ & local & -- & Pipeline checks \\
+\bottomrule
+\end{tabular}
+\par\vspace{3pt}{\footnotesize $^{a}$Cut-off reasoning is followed by a forced answer; forced picks are flagged. $^{b}$Random, always-first, copy-last-choice.}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Held-out accuracy (\%) and utility regret by rounds of feedback. 95\% CIs in brackets.}
+\label{tab:main}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & \multicolumn{3}{c}{Accuracy (\%)} & Regret \\
+\cmidrule(lr){2-4}\cmidrule(l){5-5}
+Agent & Round 0 & Round 1 & Round 5 & Round 5 \\
+\midrule
+Bayesian Assistant & 33.6 & 56.1 & 80.6 [77.6, 83.4] & 0.043 \\
+Gemma 4 31B, thinking & 37.6 & 47.9 & 62.7 [58.9, 66.3] & 0.144 \\
+Gemma 4 31B & 36.9 & 45.0 & 59.4 [55.5, 62.9] & 0.164 \\
+Qwen 2.5 7B & 36.6 & 37.0 & 38.0 [34.6, 41.8] & 0.348 \\
+Random & 33.8 & 33.2 & 33.3 [32.3, 34.3] & 0.398 \\
+\bottomrule
+\end{tabular}
+\par\vspace{3pt}{\footnotesize Paper, round 5: Bayesian Assistant $\approx$80\%; Qwen 2.5 7B 37\%; Gemma 2 9B 37\%.}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Share of achievable welfare (\%) by principal type, and the welfare-maximising number of examples $n^{*}$ at cost $c$ per example.}
+\label{tab:principals}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & \multicolumn{2}{c}{Welfare (\%)} & & \multicolumn{3}{c}{$n^{*}$ at $c=$} \\
+\cmidrule(lr){2-3}\cmidrule(l){5-7}
+Agent & Round 0 & Round 5 & Gain & 1 & 2 & 4 \\
+\midrule
+\multicolumn{7}{@{}l}{\emph{Conventional principals} ($n=14$)}\\
+Bayesian Assistant & 50.2 & 91.4 & +41.2 & 5 & 3 & 3 \\
+Gemma 4 31B, thinking & 77.1 & 83.4 & +6.3 & 5 & 0 & 0 \\
+Gemma 4 31B & 73.5 & 80.3 & +6.8 & 3 & 1 & 0 \\
+Qwen 2.5 7B & 74.0 & 67.9 & $-6.1$ & 0 & 0 & 0 \\
+\addlinespace
+\multicolumn{7}{@{}l}{\emph{Unusual principals} ($n=18$)}\\
+Bayesian Assistant & 48.8 & 89.6 & +40.8 & 5 & 3 & 3 \\
+Gemma 4 31B, thinking & 32.9 & 71.6 & +38.7 & 3 & 3 & 3 \\
+Gemma 4 31B & 32.8 & 68.3 & +35.5 & 5 & 3 & 3 \\
+Qwen 2.5 7B & 33.3 & 45.1 & +11.8 & 2 & 2 & 1 \\
+\bottomrule
+\end{tabular}
+\par\vspace{3pt}{\footnotesize Unusual: prefers pricier, longer, or more stops on $\geq 2$ of 3 attributes. $c$ in welfare points per example.}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Final-round accuracy (\%): paper vs.\ this replication.}
+\label{tab:replication}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Agent & Qiu et al.\ (2026) & This study \\
+\midrule
+Bayesian Assistant & $\approx 80$ & 80.6 \\
+Qwen 2.5 7B & 37 & 38.0 \\
+Gemma 2 9B / Gemma 4 31B & 37 & 59.4 \\
+Gemma 4 31B, thinking & -- & 62.7 \\
+\bottomrule
+\end{tabular}
+\end{table}

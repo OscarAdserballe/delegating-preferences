@@ -1,0 +1,12 @@
+% Welfare definitions. Needs \usepackage{amsmath,amssymb}.
+\begin{align}
+U_i(f) &= \theta_i^{\top}\phi(f) \label{eq:utility}\\
+R^{A}_{imt} &= \max_{f \in M_m} U_i(f) - U_i\bigl(f^{A}_{imt}\bigr) \label{eq:regret}\\
+w^{A}_{imt} &= \frac{U_i\bigl(f^{A}_{imt}\bigr) - \min_{f \in M_m} U_i(f)}{\max_{f \in M_m} U_i(f) - \min_{f \in M_m} U_i(f)} \label{eq:share}\\
+W^{A}_{i}(t) &= \frac{100}{|\mathcal{M}_i|} \sum_{m \in \mathcal{M}_i} w^{A}_{imt},
+\qquad \overline{W}^{A}_{G}(t) = \frac{1}{|G|} \sum_{i \in G} W^{A}_{i}(t) \label{eq:welfare}\\
+NW^{A}_{G}(n; c) &= \overline{W}^{A}_{G}(n) - c\,n,
+\qquad n^{*}(c) = \operatorname*{arg\,max}_{n \in \{0,\dots,5\}} NW^{A}_{G}(n; c) \label{eq:net}\\
+D_i &= \mathbf{1}\Bigl[\textstyle\sum_{j \in \{\text{dur},\,\text{stops},\,\text{price}\}} \mathbf{1}[\theta_{ij} > 0] \geq 2\Bigr] \label{eq:unusual}
+\end{align}
+where $\mathcal{M}_i$ is the set of held-out menus on which principal $i$ is not indifferent between all three flights.
