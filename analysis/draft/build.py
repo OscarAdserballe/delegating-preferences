@@ -77,7 +77,7 @@ BN_TABLE = (
 
 BODY = f'''
 <header data-strata-id="title">
-  <div class="eyebrow">Draft · v2 · for annotation</div>
+  <div class="eyebrow">Draft · v3 · for annotation</div>
   <h1>Delegating preferences</h1>
   <p class="sub">Replicating Qiu et al. (2026) with newer LLMs, and pricing what it costs to teach an AI agent what you want.</p>
   <div class="key"><span class="tag yours">yours</span> from your raw material, trimmed <span class="tag new">new</span> written by Claude <span class="count" id="wc"></span></div>
@@ -85,7 +85,7 @@ BODY = f'''
 
 <section data-strata-id="s1">
 <h2>Why this matters</h2>
-<p class="yours" data-strata-id="s1p1">The biggest delegation problem we're going to face is gradually handing more and more decision-making power to AI agents. Partly for convenience: “friction” is the metaphor of choice for the small, thoughtless activities that slow us down, and agents are yet another way of removing it. This is the advent of the personal agent. Partly to extend our reach: until now, the only way to cope with capacity was an extra pair of hands. Software eased that, and it was with software that we began to see millions of dollars of revenue per person. Agents are very much the culmination of that.</p>
+<p class="yours" data-strata-id="s1p1">The biggest delegation problem we're going to face is gradually handing more and more decision-making power to AI agents. Partly for convenience: “friction” is the metaphor of choice in tech for the small, thoughtless activities that slow us down, and agents are yet another way of removing it. This is the advent of the personal agent. Partly to extend our reach: until now, the only way to cope with capacity was an extra pair of hands. Software eased that, and it was with software that we began to see millions of dollars of revenue per person. Agents very much feel like the culmination of that.</p>
 <p class="yours" data-strata-id="s1p2">There's something promising, and frankly a little scary, about extending one's exact preferences across a swarm of AI agents. Delegating has always meant aligning many people's interests and telling a captivating story (even the strictest, most authoritarian people have had to). With agents, that constraint starts to disappear.</p>
 <p class="yours" data-strata-id="s1p3">But nonetheless, the question of: how efficiently do these agents translate our preferences? Adjacently, whose preferences are embedded in the models themselves, likely from pre-training and RLHF emphases? <span class="newin">Kirk et al. (2024) find that RLHF generalises better than supervised fine-tuning but significantly reduces output diversity: post-training pulls a model away from the spread of what people do and towards one preferred answer.</span> And which types of preferences take more care to communicate to them?</p>
 </section>
@@ -179,6 +179,10 @@ BODY = f'''
 <p class="yours" data-strata-id="s6p0">What I said about no bias isn't quite true. If we analyse the round-0 traces, there's a direct preference for cheap, short, direct flights. The model doesn't act as an agnostic agent with no information; it presumes some baked-in things, very likely from its training data.</p>
 <figure data-strata-id="fig5"><img alt="Round-0 accuracy by number of contrarian tastes" src="{img('figures/5_round0_default.png')}"></figure>
 <p class="yours" data-strata-id="s6p0b">With no information, all three models serve the same default traveller. They're right about 60% of the time for users who share that taste and 7–8% for users who want the opposite on everything. In 60% of round-0 traces, the reasoning appeals to what “a typical traveller” wants. <span class="newin">The Bayesian learner, with a flat prior, sits at chance for everyone. And the default isn't only a starting point: for users who don't care about price, Gemma keeps filling in a preference for cheap flights even after five rounds of feedback.</span></p>
+<div class="trace" data-strata-id="trace-202"><div class="tr-head"><span class="tag new">new</span><b>User 202</b> likes direct, early and somewhat longer flights, and does not care about price: θ = (−½, ½, −1, 0). After five rounds of feedback, Gemma (thinking) writes:</div>
+<div class="think">Round 5 — Result: F2 (0 stops, cheap, but long duration). Inference: 0 stops is very important. Price is important. Duration is less important than stops.</div>
+<div class="think">Preference 1: 0 stops (strongest preference). Preference 2: Morning departure. Preference 3: Price (generally prefers lower price, but 0 stops and time of day seem to override it).</div>
+<div class="tr-foot">The direct flight the user picked in round 5 happened to be cheap. The model reads that coincidence as a taste for low prices, which is what its default expects.</div></div>
 <p class="yours" data-strata-id="s6p1">This is where unusual principals come in. Some preferences are unusual by definition: preferring longer flights, pricier flights, more stops. <span class="newin">We call a principal unusual if they prefer the odd direction on at least two of the three (18 of 50 users), and conventional if on none (14). The 18 in between are left out.</span></p>
 <div class="eq" data-strata-id="eq-d">{EQ_D}</div>
 <p class="new" data-strata-id="s6p2">Splitting the net-welfare curves by principal type, and comparing only the LLMs, the default rule turns out to decide how much instruction pays. A conventional principal starts at 73–77% of achievable welfare with no examples, already better than the Bayesian learner after one round (72%), and the models barely improve from there. For them, every example is mostly cost. An unusual principal starts at 33%, below random, and has to teach the agent; Gemma (thinking) gets them to 72%, still well short of the Bayesian learner's 90%.</p>
@@ -187,15 +191,7 @@ BODY = f'''
 {BN_TABLE}
 </section>
 
-<section data-strata-id="s7">
-<h2>Limits and next steps</h2>
-<ul class="new" data-strata-id="s7l">
-<li>Only five rounds: where the best number of examples is 5, it may lie further out.</li>
-<li>The cost per example is assumed, not measured. A realistic cost (time to give an example, or a price from a survey) would pin down where the hump sits.</li>
-<li>The unusual/conventional rule was set after seeing the data. A pre-registered run on about 20 new unusual principals would confirm it.</li>
-<li>One menu seed, 50 users, open models only; Gemma ran on a single provider whose quantisation is unstated.</li>
-</ul>
-</section>
+
 '''
 
 HTML = '''<title>Delegating Preferences Draft</title>
@@ -237,9 +233,11 @@ math{font-family:"STIX Two Math","Latin Modern Math","Cambria Math",var(--serif)
 .menu tr.agent td{background:color-mix(in srgb,var(--new) 15%,transparent)}
 .menu tr.user td{background:color-mix(in srgb,var(--yours) 18%,transparent)}
 .menu tr.agent td:first-child::after{content:"  ← Gemma";color:var(--new)} .menu tr.user td:first-child::after{content:"  ← user";color:var(--yours)}
+.trace{margin:22px 0 26px;border:1px solid var(--rule);border-radius:10px;padding:14px 16px;background:var(--tint);font-family:var(--sans);font-size:15px}
+.tr-head{margin-bottom:8px}.tr-foot{margin-top:8px;font-size:14px;color:var(--ink-2)}
 .think{font-family:var(--serif);font-style:italic;color:var(--ink-2);margin:4px 0}
 .fb{font-size:14px}
-.wk-foot{margin-top:12px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;align-items:center}
+.wk-foot{margin-top:12px;display:flex;flex-direction:column;gap:12px}
 .wk-foot img{background:#fff;border-radius:6px;padding:6px}
 .wk-foot p{font-size:14.5px;margin:0}
 table.bt{border-collapse:collapse;width:100%;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);font-family:var(--sans);font-size:14px;margin:30px 0 30px}
