@@ -28,7 +28,7 @@ The benchmark is a Bayesian learner. It's a little bit of cheating: it knows the
 
 ```math
 H_t = \{\theta : \theta \text{ consistent with every pick so far}\}, \qquad
-\hat f_t = \operatorname*{arg\,max}_{f}\; \mathbb{E}\left[\theta \mid H_t\right]^{\top}\varphi(f)
+\hat f_t = \underset{f}{\mathrm{arg\,max}}\; \mathbb{E}\left[\theta \mid H_t\right]^{\top}\varphi(f)
 ```
 
 To make this concrete, here is one user, round by round, with Gemma 4 31B (thinking) as the agent.
@@ -89,7 +89,7 @@ w_i(\text{menu}) = \frac{U_i(\text{agent's pick}) - \min_f U_i(f)}{\max_f U_i(f)
 Each example I provide is a cost, and the welfare the agent delivers is the benefit. The cost is the principal's time and attention: choosing, correcting, explaining. We assume for now that it is linear, a cost $`c`$ per example, measured in points of welfare. Net welfare and the best number of examples are then:
 
 ```math
-\mathrm{NW}(n; c) = W(n) - c \cdot n, \qquad n^*(c) = \operatorname*{arg\,max}_{n \in \{0, \dots, 5\}} \mathrm{NW}(n; c)
+\mathrm{NW}(n; c) = W(n) - c \cdot n, \qquad n^*(c) = \underset{n \in \{0, \dots, 5\}}{\mathrm{arg\,max}} \mathrm{NW}(n; c)
 ```
 
 And we get the classic trade-off curve: there's a benefit to specifying, as the agent gets better, but also a cost. With a cost of 2 points per example, net welfare rises, peaks and flattens: everyone except Qwen should give about three examples.
