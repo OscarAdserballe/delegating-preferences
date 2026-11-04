@@ -197,7 +197,6 @@ def main() -> None:
     fig.savefig(OUT / "3_net_welfare.png")
     plt.close(fig)
 
-
     # Figure 5: round 0 = the agent's default. Accuracy with no history, by how many contrarian tastes the user has
     r0 = held[held["checkpoint"] == 0].assign(contra=lambda d: d["user_id"].map(contra))
     tab = r0.groupby(["arm", "contra"])["acc"].mean().unstack()
@@ -250,7 +249,14 @@ def main() -> None:
             k = int(np.argmax(net))
             ax.plot(x, net, color=COLOR[a], lw=2.2, ls=ls, marker="o", ms=4)
             ax.plot([k], [net[k]], marker="o", ms=11, mfc="none", mec=COLOR[a], mew=2)
-        ax.annotate(LABEL[a], (5.1, np.array(w["unusual"][a]["mean"])[-1] - c_show * 5), color=COLOR[a], fontsize=9, va="center", fontweight="bold")
+        ax.annotate(
+            LABEL[a],
+            (5.1, np.array(w["unusual"][a]["mean"])[-1] - c_show * 5),
+            color=COLOR[a],
+            fontsize=9,
+            va="center",
+            fontweight="bold",
+        )
     ax.plot([], [], color=MUTED, ls="--", label="conventional principals")
     ax.plot([], [], color=MUTED, ls="-", label="unusual principals")
     fig.legend(frameon=False, fontsize=9.5, loc="outside lower center", ncol=2)

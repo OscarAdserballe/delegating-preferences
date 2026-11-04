@@ -10,11 +10,26 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 df = pd.read_parquet(ROOT / "results" / "main" / "decisions.parquet")
-h = df[(df["user_id"] == 343) & (df["kind"] == "heldout")].groupby(["arm", "checkpoint"])["correct"].mean().unstack() * 100
-arms = {"bayes": ("Bayesian Assistant", "#2a78d6"), "gemma4-31b-think": ("Gemma 4 · thinking", "#6250d6"),
-        "gemma4-31b": ("Gemma 4", "#1baf7a"), "qwen25-7b": ("Qwen 2.5 7B", "#eb6834")}
-plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "axes.edgecolor": "#e3e7ea",
-                     "axes.labelcolor": "#5b6773", "xtick.color": "#5b6773", "ytick.color": "#5b6773"})
+h = (
+    df[(df["user_id"] == 343) & (df["kind"] == "heldout")].groupby(["arm", "checkpoint"])["correct"].mean().unstack()
+    * 100
+)
+arms = {
+    "bayes": ("Bayesian Assistant", "#2a78d6"),
+    "gemma4-31b-think": ("Gemma 4 · thinking", "#6250d6"),
+    "gemma4-31b": ("Gemma 4", "#1baf7a"),
+    "qwen25-7b": ("Qwen 2.5 7B", "#eb6834"),
+}
+plt.rcParams.update(
+    {
+        "font.family": "DejaVu Sans",
+        "font.size": 10,
+        "axes.edgecolor": "#e3e7ea",
+        "axes.labelcolor": "#5b6773",
+        "xtick.color": "#5b6773",
+        "ytick.color": "#5b6773",
+    }
+)
 fig, ax = plt.subplots(figsize=(5.6, 3.3), dpi=170, constrained_layout=True)
 for a, (lab, c) in arms.items():
     y = h.loc[a].to_numpy()

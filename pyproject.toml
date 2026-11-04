@@ -1,7 +1,7 @@
 [project]
 name = "flight-prefs"
 version = "0.1.0"
-description = "Replication of Qiu et al. (2026) Bayesian teaching, flight task, plus a utility-regret extension"
+description = "Replicating Qiu et al. (2026) on newer LLMs, and pricing what it costs to teach an AI agent your preferences"
 readme = "README.md"
 authors = [
     { name = "Claude", email = "noreply@anthropic.com" }
@@ -29,6 +29,7 @@ dev = [
 
 [tool.ruff]
 line-length = 120
+extend-exclude = ["analysis/explore", "analysis/draft"]  # one-off exploration scripts, kept as run
 target-version = "py311"
 
 [tool.ruff.lint]
