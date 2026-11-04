@@ -197,6 +197,72 @@ def main() -> None:
     fig.savefig(OUT / "3_net_welfare.png")
     plt.close(fig)
 
+
+    # Figure 5: round 0 = the agent's default. Accuracy with no history, by how many contrarian tastes the user has
+    r0 = held[held["checkpoint"] == 0].assign(contra=lambda d: d["user_id"].map(contra))
+    tab = r0.groupby(["arm", "contra"])["acc"].mean().unstack()
+    ncontra = pd.Series(contra).value_counts().sort_index()
+    summary["round0_acc_by_contra"] = {a: tab.loc[a].round(1).tolist() for a in ARMS}
+    fig, ax = plt.subplots(figsize=(8.2, 4.3), constrained_layout=True)
+    bw = 0.2
+    for j, a in enumerate(ARMS):
+        ax.bar(np.arange(4) + (j - 1.5) * bw, tab.loc[a].to_numpy(), bw * 0.92, color=COLOR[a], label=LABEL[a])
+    ax.axhline(100 / 3, color=MUTED, lw=0.8, ls=(0, (1, 3)))
+    ax.text(3.45, 35, "random", color=MUTED, fontsize=8.5, ha="right")
+    ax.set_xticks(range(4), [f"{k}\n(n = {ncontra.get(k, 0)})" for k in range(4)])
+    ax.set_xlabel("Contrarian tastes the user has (wants pricier, longer or more stops)")
+    ax.set_ylabel("Accuracy with no history (%)")
+    ax.set_title("Before any feedback, the LLMs serve a cheap, short, direct traveller")
+    ax.legend(frameon=False, ncol=4, fontsize=9, loc="upper right", bbox_to_anchor=(1, 1.0))
+    ax.set_ylim(0, 75)
+    style(ax)
+    fig.savefig(OUT / "5_round0_default.png")
+    plt.close(fig)
+
+    # Figure 6: the basic hump. Net welfare over all 50 users, LLMs vs the Bayesian learner
+    wall = curves("welfare", ARMS)
+    summary["welfare_all"] = wall
+    summary["best_n_all"] = {a: [int(np.argmax(np.array(wall[a]["mean"]) - c * x)) for c in COSTS] for a in ARMS}
+    fig, axs = plt.subplots(1, 2, figsize=(10, 4.4), constrained_layout=True)
+    for a in ARMS:
+        m = np.array(wall[a]["mean"])
+        axs[0].plot(x, m, color=COLOR[a], lw=2.2, marker="o", ms=4, label=LABEL[a])
+        net = m - c_show * x
+        k = int(np.argmax(net))
+        axs[1].plot(x, net, color=COLOR[a], lw=2.2, marker="o", ms=4)
+        axs[1].plot([k], [net[k]], marker="o", ms=11, mfc="none", mec=COLOR[a], mew=2)
+    axs[0].set_title("Welfare W(n), all 50 users")
+    axs[0].set_ylabel("Share of achievable welfare (%)")
+    axs[1].set_title(f"Net welfare W(n) − {c_show}n (ringed = best n)")
+    for ax in axs:
+        ax.set_xticks(x)
+        ax.set_xlabel("Examples given (rounds of feedback)")
+        style(ax)
+    fig.legend(*axs[0].get_legend_handles_labels(), frameon=False, loc="outside lower center", ncol=4, fontsize=9.5)
+    fig.savefig(OUT / "6_hump_all.png")
+    plt.close(fig)
+
+    # Figure 7: LLMs only, conventional (dashed) vs unusual (solid) principals, net welfare at c_show
+    fig, ax = plt.subplots(figsize=(8.2, 4.6), constrained_layout=True)
+    for a in ARMS[1:]:
+        for g, ls in (("conventional", "--"), ("unusual", "-")):
+            net = np.array(w[g][a]["mean"]) - c_show * x
+            k = int(np.argmax(net))
+            ax.plot(x, net, color=COLOR[a], lw=2.2, ls=ls, marker="o", ms=4)
+            ax.plot([k], [net[k]], marker="o", ms=11, mfc="none", mec=COLOR[a], mew=2)
+        ax.annotate(LABEL[a], (5.1, np.array(w["unusual"][a]["mean"])[-1] - c_show * 5), color=COLOR[a], fontsize=9, va="center", fontweight="bold")
+    ax.plot([], [], color=MUTED, ls="--", label="conventional principals")
+    ax.plot([], [], color=MUTED, ls="-", label="unusual principals")
+    fig.legend(frameon=False, fontsize=9.5, loc="outside lower center", ncol=2)
+    ax.set_xlim(-0.15, 6.6)
+    ax.set_xticks(x)
+    ax.set_xlabel("Examples given (rounds of feedback)")
+    ax.set_ylabel(f"Net welfare (%), cost {c_show} pts per example")
+    ax.set_title("Conventional principals should say nothing; unusual ones must teach")
+    style(ax)
+    fig.savefig(OUT / "7_llm_split.png")
+    plt.close(fig)
+
     (Path(__file__).resolve().parent / "summary.json").write_text(json.dumps(summary, indent=1))
     for g in ("conventional", "unusual"):
         print(g, {a: (w[g][a]["mean"][0], w[g][a]["mean"][-1]) for a in ARMS})
